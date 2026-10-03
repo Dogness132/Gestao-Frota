@@ -1,17 +1,17 @@
 [
   {
     "id": 1,
-    "cv": "ABC-1234",
+    "cv": "1",
     "sm1": "XYZ-1111",
     "sm2": "XYZ-2222",
     "area": "Entrega",
     "operacao": "Raízen",
     "suboperacao": "City",
-    "status": "Rodando"
+    "status": "Parado"
   },
   {
     "id": 2,
-    "cv": "DEF-5678",
+    "cv": "2",
     "sm1": "XYZ-3333",
     "sm2": "XYZ-4444",
     "area": "Entrega",
@@ -21,7 +21,7 @@
   },
   {
     "id": 3,
-    "cv": "GHI-9012",
+    "cv": "3",
     "sm1": "XYZ-5555",
     "sm2": "XYZ-6666",
     "area": "Coleta",
@@ -31,7 +31,7 @@
   },
   {
     "id": 4,
-    "cv": "JKL-3456",
+    "cv": "4",
     "sm1": "XYZ-7777",
     "sm2": "XYZ-8888",
     "area": "Entrega",
@@ -41,7 +41,7 @@
   },
   {
     "id": 5,
-    "cv": "MNO-7890",
+    "cv": "5",
     "sm1": "XYZ-9999",
     "sm2": "XYZ-1010",
     "area": "Entrega",
@@ -51,7 +51,7 @@
   },
   {
     "id": 6,
-    "cv": "PQR-1234",
+    "cv": "6",
     "sm1": "XYZ-1112",
     "sm2": "XYZ-1314",
     "area": "Coleta",
@@ -61,7 +61,7 @@
   },
   {
     "id": 7,
-    "cv": "STU-5678",
+    "cv": "7",
     "sm1": "XYZ-1516",
     "sm2": "XYZ-1718",
     "area": "Entrega",
@@ -71,12 +71,12 @@
   },
   {
     "id": 8,
-    "cv": "VWX-9012",
+    "cv": "8",
     "sm1": "XYZ-1920",
     "sm2": "XYZ-2122",
     "area": "Coleta",
     "operacao": "Nexta",
     "suboperacao": "Geral",
-    "status": "Rodando"
+    "status": "Reserva"
   }
 ]
