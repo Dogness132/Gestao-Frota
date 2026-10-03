@@ -2,109 +2,64 @@
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Gestão de Frota</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
-
 
 <body>
 
-
-    <!-- ========================================
-         SIDEBAR
-    ========================================= -->
+    <!-- =============================== -->
+    <!-- SIDEBAR -->
+    <!-- =============================== -->
 
     <aside class="sidebar">
 
         <div class="logo">
-
             🚛
-
-            <span>
-                GESTÃO<br>
-                DE FROTA
-            </span>
-
+            <span>GESTÃO<br>DE FROTA</span>
         </div>
-
 
         <nav>
 
-            <a
-                href="#"
-                class="menu-item active"
-            >
+            <a href="#" class="menu-item active">
                 📊
                 <span>Dashboard</span>
             </a>
 
-
-            <a
-                href="#"
-                class="menu-item"
-            >
+            <a href="#" class="menu-item">
                 🚛
                 <span>Frota</span>
             </a>
 
-
-            <a
-                href="#"
-                class="menu-item"
-            >
+            <a href="#" class="menu-item">
                 👨‍✈️
                 <span>Motoristas</span>
             </a>
 
-
-            <a
-                href="#"
-                class="menu-item"
-            >
+            <a href="#" class="menu-item">
                 📅
                 <span>Escala</span>
             </a>
 
-
-            <a
-                href="#"
-                class="menu-item"
-            >
+            <a href="#" class="menu-item">
                 🔧
                 <span>Manutenção</span>
             </a>
 
-
-            <a
-                href="#"
-                class="menu-item"
-            >
+            <a href="#" class="menu-item">
                 📋
                 <span>Ocorrências</span>
             </a>
 
         </nav>
 
-
         <div class="sidebar-bottom">
 
-            <a
-                href="#"
-                class="menu-item"
-            >
+            <a href="#" class="menu-item">
                 ⚙️
                 <span>Configurações</span>
             </a>
@@ -114,30 +69,20 @@
     </aside>
 
 
-
-    <!-- ========================================
-         CONTEÚDO PRINCIPAL
-    ========================================= -->
+    <!-- =============================== -->
+    <!-- CONTEÚDO PRINCIPAL -->
+    <!-- =============================== -->
 
     <main class="main">
 
-
-        <!-- HEADER -->
+        <!-- TOPBAR -->
 
         <header class="topbar">
 
             <div>
-
-                <h1>
-                    Dashboard
-                </h1>
-
-                <p>
-                    Visão geral da operação
-                </p>
-
+                <h1>Dashboard</h1>
+                <p>Visão geral da operação</p>
             </div>
-
 
             <div class="user">
 
@@ -145,17 +90,9 @@
                     J
                 </div>
 
-
                 <div>
-
-                    <strong>
-                        Gestor
-                    </strong>
-
-                    <small>
-                        Operações
-                    </small>
-
+                    <strong>Gestor</strong>
+                    <small>Operações</small>
                 </div>
 
             </div>
@@ -163,13 +100,11 @@
         </header>
 
 
-
-        <!-- ========================================
-             CARDS
-        ========================================= -->
+        <!-- =============================== -->
+        <!-- CARDS -->
+        <!-- =============================== -->
 
         <section class="cards">
-
 
             <div class="card">
 
@@ -186,7 +121,6 @@
                 </small>
 
             </div>
-
 
 
             <div class="card green">
@@ -206,7 +140,6 @@
             </div>
 
 
-
             <div class="card red">
 
                 <span class="card-title">
@@ -222,7 +155,6 @@
                 </small>
 
             </div>
-
 
 
             <div class="card yellow">
@@ -241,19 +173,17 @@
 
             </div>
 
-
         </section>
 
 
-
-        <!-- ========================================
-             GRÁFICOS
-        ========================================= -->
+        <!-- =============================== -->
+        <!-- PAINÉIS -->
+        <!-- =============================== -->
 
         <section class="content-grid">
 
 
-            <!-- STATUS -->
+            <!-- STATUS DA FROTA -->
 
             <div class="panel">
 
@@ -272,8 +202,10 @@
 
                 <div class="status-container">
 
-
-                    <div class="donut">
+                    <div
+                        class="donut"
+                        id="donut"
+                    >
 
                         <div class="donut-center">
 
@@ -292,14 +224,13 @@
 
                     <div class="legend">
 
-
                         <div>
 
                             <span class="dot green-dot"></span>
 
                             Em operação
 
-                            <strong id="legendaRodando">
+                            <strong id="legendOperando">
                                 0
                             </strong>
 
@@ -312,7 +243,7 @@
 
                             Parados
 
-                            <strong id="legendaParado">
+                            <strong id="legendParados">
                                 0
                             </strong>
 
@@ -325,20 +256,17 @@
 
                             Reserva
 
-                            <strong id="legendaReserva">
+                            <strong id="legendReserva">
                                 0
                             </strong>
 
                         </div>
 
-
                     </div>
-
 
                 </div>
 
             </div>
-
 
 
             <!-- DISTRIBUIÇÃO -->
@@ -361,6 +289,8 @@
                 <div class="distribution">
 
 
+                    <!-- RAÍZEN -->
+
                     <div class="distribution-row">
 
                         <div>
@@ -370,13 +300,12 @@
                             </strong>
 
                             <span>
-                                Operação
+                                Entrega
                             </span>
 
                         </div>
 
-
-                        <strong id="totalRaizen">
+                        <strong id="quantidadeRaizen">
                             0
                         </strong>
 
@@ -388,11 +317,13 @@
                         <div
                             class="bar-fill"
                             id="barraRaizen"
+                            style="width: 0%;"
                         ></div>
 
                     </div>
 
 
+                    <!-- NEXTA -->
 
                     <div class="distribution-row">
 
@@ -408,8 +339,7 @@
 
                         </div>
 
-
-                        <strong id="totalNexta">
+                        <strong id="quantidadeNexta">
                             0
                         </strong>
 
@@ -421,6 +351,7 @@
                         <div
                             class="bar-fill"
                             id="barraNexta"
+                            style="width: 0%;"
                         ></div>
 
                     </div>
@@ -430,14 +361,12 @@
 
             </div>
 
-
         </section>
 
 
-
-        <!-- ========================================
-             TABELA DA FROTA
-        ========================================= -->
+        <!-- =============================== -->
+        <!-- TABELA DA FROTA -->
+        <!-- =============================== -->
 
         <section class="panel fleet-panel">
 
@@ -470,12 +399,9 @@
             </div>
 
 
-
             <div class="table-container">
 
-
                 <table>
-
 
                     <thead>
 
@@ -518,29 +444,24 @@
 
                     </tbody>
 
-
                 </table>
-
 
             </div>
 
-
         </section>
-
 
     </main>
 
 
 
-    <!-- ========================================
-         MODAL NOVO VEÍCULO
-    ========================================= -->
+    <!-- =============================== -->
+    <!-- MODAL NOVO VEÍCULO -->
+    <!-- =============================== -->
 
     <div
         class="modal-overlay"
         id="modalVeiculo"
     >
-
 
         <div class="modal">
 
@@ -573,7 +494,6 @@
             </div>
 
 
-
             <!-- FORMULÁRIO -->
 
             <form id="formVeiculo">
@@ -600,7 +520,6 @@
                     </div>
 
 
-
                     <!-- SM1 -->
 
                     <div class="form-group">
@@ -619,7 +538,6 @@
                     </div>
 
 
-
                     <!-- SM2 -->
 
                     <div class="form-group">
@@ -636,7 +554,6 @@
                         >
 
                     </div>
-
 
 
                     <!-- ÁREA -->
@@ -673,7 +590,6 @@
                     </div>
 
 
-
                     <!-- OPERAÇÃO -->
 
                     <div class="form-group">
@@ -697,7 +613,6 @@
                     </div>
 
 
-
                     <!-- SUBOPERAÇÃO -->
 
                     <div class="form-group">
@@ -719,7 +634,6 @@
                         </select>
 
                     </div>
-
 
 
                     <!-- STATUS -->
@@ -755,11 +669,9 @@
                 </div>
 
 
-
                 <!-- BOTÕES -->
 
                 <div class="form-actions">
-
 
                     <button
                         type="button"
@@ -777,24 +689,19 @@
                         Salvar veículo
                     </button>
 
-
                 </div>
 
 
             </form>
 
-
         </div>
-
 
     </div>
 
 
+    <!-- SCRIPT -->
 
-    <!-- JAVASCRIPT -->
-
-    <script src="script.js"></script>
-
+    <script src="script.js?v=5"></script>
 
 </body>
 
