@@ -1,614 +1,615 @@
 /* ========================================= */
-/* RESET */
+/* GESTÃO DE FROTA */
 /* ========================================= */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-
-body {
-    font-family: Arial, Helvetica, sans-serif;
-
-    background: #0f1117;
-
-    color: #f1f5f9;
-
-    min-height: 100vh;
-}
 
 
 /* ========================================= */
-/* SIDEBAR */
+/* CONFIGURAÇÕES */
 /* ========================================= */
 
-.sidebar {
-    position: fixed;
-
-    left: 0;
-    top: 0;
-
-    width: 240px;
-    height: 100vh;
-
-    background: #151922;
-
-    border-right: 1px solid #252b36;
-
-    padding: 25px 15px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    z-index: 100;
-}
+const URL_FROTA =
+    "data/frota.json";
 
 
-.logo {
-    display: flex;
-
-    align-items: center;
-
-    gap: 12px;
-
-    font-size: 28px;
-
-    font-weight: bold;
-
-    padding: 10px 12px 35px;
-}
+const CHAVE_ADICIONAIS =
+    "frota_adicional";
 
 
-.logo span {
-    font-size: 14px;
-
-    line-height: 1.1;
-}
-
-
-.sidebar nav {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 7px;
-}
-
-
-.menu-item {
-    display: flex;
-
-    align-items: center;
-
-    gap: 12px;
-
-    padding: 13px 15px;
-
-    color: #9ca3af;
-
-    text-decoration: none;
-
-    border-radius: 10px;
-
-    transition: 0.2s;
-}
-
-
-.menu-item:hover {
-    background: #202631;
-
-    color: #ffffff;
-}
-
-
-.menu-item.active {
-    background: #263142;
-
-    color: #ffffff;
-}
-
-
-.sidebar-bottom {
-    margin-top: auto;
-}
+const CHAVE_ALTERACOES =
+    "frota_alteracoes";
 
 
 /* ========================================= */
-/* MAIN */
+/* VARIÁVEIS */
 /* ========================================= */
 
-.main {
-    margin-left: 240px;
+let frota = [];
 
-    min-height: 100vh;
+let frotaBase = [];
 
-    padding: 30px 35px;
-}
+let frotaAdicional = [];
+
+let frotaAlteracoes = {};
 
 
 /* ========================================= */
-/* TOPBAR */
+/* ELEMENTOS */
 /* ========================================= */
 
-.topbar {
-    display: flex;
+const modal =
+    document.getElementById("modalVeiculo");
 
-    align-items: center;
 
-    justify-content: space-between;
+const formVeiculo =
+    document.getElementById("formVeiculo");
 
-    margin-bottom: 30px;
+
+const btnNovoVeiculo =
+    document.getElementById("btnNovoVeiculo");
+
+
+const btnDashboardNovo =
+    document.getElementById("btnDashboardNovo");
+
+
+const btnFecharModal =
+    document.getElementById("btnFecharModal");
+
+
+const btnCancelar =
+    document.getElementById("btnCancelar");
+
+
+const tabelaFrota =
+    document.getElementById("tabelaFrota");
+
+
+const tabelaDashboard =
+    document.getElementById("tabelaDashboard");
+
+
+const buscaFrota =
+    document.getElementById("buscaFrota");
+
+
+const filtroArea =
+    document.getElementById("filtroArea");
+
+
+const filtroOperacao =
+    document.getElementById("filtroOperacao");
+
+
+const filtroStatus =
+    document.getElementById("filtroStatus");
+
+
+const selectArea =
+    document.getElementById("area");
+
+
+const selectOperacao =
+    document.getElementById("operacao");
+
+
+const selectSuboperacao =
+    document.getElementById("suboperacao");
+
+
+const tituloModal =
+    document.getElementById("tituloModal");
+
+
+const subtituloModal =
+    document.getElementById("subtituloModal");
+
+
+const veiculoId =
+    document.getElementById("veiculoId");
+
+
+/* ========================================= */
+/* UTILIDADES */
+/* ========================================= */
+
+function normalizar(valor) {
+
+    return String(valor || "")
+        .normalize("NFD")
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+        .toLowerCase()
+        .trim();
+
 }
 
 
-.topbar h1 {
-    font-size: 30px;
+function valorSeguro(valor) {
 
-    margin-bottom: 5px;
+    if (
+        valor === null ||
+        valor === undefined ||
+        valor === ""
+    ) {
+
+        return "-";
+
+    }
+
+    return String(valor)
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
 }
 
 
-.topbar p {
-    color: #8d96a5;
-}
+function gerarId() {
 
+    return (
+        Date.now().toString() +
+        Math.random()
+            .toString(36)
+            .substring(2, 8)
+    );
 
-.user {
-    display: flex;
-
-    align-items: center;
-
-    gap: 10px;
-}
-
-
-.user strong {
-    display: block;
-}
-
-
-.user small {
-    display: block;
-
-    color: #8d96a5;
-
-    margin-top: 3px;
-}
-
-
-.avatar {
-    width: 42px;
-    height: 42px;
-
-    border-radius: 50%;
-
-    background: #273142;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    font-weight: bold;
 }
 
 
 /* ========================================= */
-/* PÁGINAS */
+/* CARREGAR FROTA */
 /* ========================================= */
 
-.page {
-    width: 100%;
-}
+async function carregarFrota() {
 
+    try {
 
-.hidden {
-    display: none !important;
-}
+        console.log(
+            "Carregando frota..."
+        );
 
 
-.page-heading {
-    display: flex;
+        const resposta =
+            await fetch(
+                URL_FROTA +
+                "?v=" +
+                Date.now(),
+                {
+                    cache: "no-store"
+                }
+            );
 
-    align-items: center;
 
-    justify-content: space-between;
+        if (!resposta.ok) {
 
-    gap: 20px;
+            throw new Error(
+                "Não foi possível carregar frota.json"
+            );
 
-    margin-bottom: 20px;
-}
+        }
 
 
-.page-heading h2 {
-    font-size: 25px;
+        frotaBase =
+            await resposta.json();
 
-    margin-bottom: 5px;
-}
 
+        if (!Array.isArray(frotaBase)) {
 
-.page-heading p {
-    color: #8d96a5;
-}
+            throw new Error(
+                "frota.json não contém uma lista válida."
+            );
 
+        }
 
-/* ========================================= */
-/* CARDS */
-/* ========================================= */
 
-.cards {
-    display: grid;
+        /* =============================== */
+        /* VEÍCULOS ADICIONAIS */
+        /* =============================== */
 
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+        const adicionaisSalvos =
+            localStorage.getItem(
+                CHAVE_ADICIONAIS
+            );
 
-    gap: 18px;
 
-    margin-bottom: 20px;
-}
+        if (adicionaisSalvos) {
 
+            try {
 
-.card {
-    background: #171c25;
+                frotaAdicional =
+                    JSON.parse(
+                        adicionaisSalvos
+                    );
 
-    border: 1px solid #252c38;
+                if (
+                    !Array.isArray(
+                        frotaAdicional
+                    )
+                ) {
 
-    border-radius: 14px;
+                    frotaAdicional = [];
 
-    padding: 22px;
+                }
 
-    min-height: 135px;
+            } catch {
 
-    display: flex;
+                frotaAdicional = [];
 
-    flex-direction: column;
-}
+            }
 
+        } else {
 
-.card-title {
-    color: #9aa3b2;
+            frotaAdicional = [];
 
-    font-size: 14px;
+        }
 
-    margin-bottom: 10px;
-}
 
+        /* =============================== */
+        /* ALTERAÇÕES */
+        /* =============================== */
 
-.card strong {
-    font-size: 32px;
+        const alteracoesSalvas =
+            localStorage.getItem(
+                CHAVE_ALTERACOES
+            );
 
-    margin-bottom: 7px;
-}
 
+        if (alteracoesSalvas) {
 
-.card small {
-    color: #7f8998;
-}
+            try {
 
+                frotaAlteracoes =
+                    JSON.parse(
+                        alteracoesSalvas
+                    );
 
-.card.green strong {
-    color: #4ade80;
-}
+            } catch {
 
+                frotaAlteracoes = {};
 
-.card.red strong {
-    color: #f87171;
-}
+            }
 
+        } else {
 
-.card.yellow strong {
-    color: #facc15;
-}
+            frotaAlteracoes = {};
 
+        }
 
-/* ========================================= */
-/* PAINÉIS */
-/* ========================================= */
 
-.content-grid {
-    display: grid;
+        /* =============================== */
+        /* MONTAR FROTA */
+        /* =============================== */
 
-    grid-template-columns:
-        1fr 1fr;
+        const baseComAlteracoes =
+            frotaBase.map(
+                veiculo => {
 
-    gap: 20px;
+                    const alteracao =
+                        frotaAlteracoes[
+                            veiculo.id
+                        ];
 
-    margin-bottom: 20px;
-}
 
+                    if (alteracao) {
 
-.panel {
-    background: #171c25;
+                        return {
+                            ...veiculo,
+                            ...alteracao
+                        };
 
-    border: 1px solid #252c38;
+                    }
 
-    border-radius: 14px;
 
-    padding: 22px;
-}
+                    return veiculo;
 
+                }
+            );
 
-.panel-header {
-    display: flex;
 
-    align-items: center;
+        frota = [
+            ...baseComAlteracoes,
+            ...frotaAdicional
+        ];
 
-    justify-content: space-between;
 
-    gap: 15px;
+        atualizarSistema();
 
-    margin-bottom: 25px;
-}
 
+        console.log(
+            "Frota carregada:",
+            frota
+        );
 
-.panel-header h2 {
-    font-size: 18px;
-}
 
+    } catch (erro) {
 
-.panel-header span {
-    color: #7f8998;
+        console.error(
+            "Erro ao carregar frota:",
+            erro
+        );
 
-    font-size: 13px;
-}
 
+        if (tabelaFrota) {
 
-/* ========================================= */
-/* DONUT */
-/* ========================================= */
+            tabelaFrota.innerHTML = `
+                <tr>
+                    <td colspan="8">
+                        Erro ao carregar a frota.
+                    </td>
+                </tr>
+            `;
 
-.status-container {
-    display: flex;
+        }
 
-    align-items: center;
+    }
 
-    justify-content: space-around;
-
-    gap: 30px;
-}
-
-
-.donut {
-    width: 170px;
-
-    height: 170px;
-
-    border-radius: 50%;
-
-    background: #303846;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    position: relative;
-}
-
-
-.donut::after {
-    content: "";
-
-    position: absolute;
-
-    width: 125px;
-
-    height: 125px;
-
-    border-radius: 50%;
-
-    background: #171c25;
-}
-
-
-.donut-center {
-    position: relative;
-
-    z-index: 2;
-
-    text-align: center;
-}
-
-
-.donut-center strong {
-    display: block;
-
-    font-size: 30px;
-}
-
-
-.donut-center span {
-    color: #8d96a5;
-
-    font-size: 12px;
-}
-
-
-.legend {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 18px;
-}
-
-
-.legend > div {
-    display: grid;
-
-    grid-template-columns:
-        12px 1fr auto;
-
-    gap: 10px;
-
-    align-items: center;
-
-    color: #cbd5e1;
-
-    font-size: 14px;
-}
-
-
-.legend strong {
-    color: #ffffff;
-}
-
-
-.dot {
-    width: 10px;
-
-    height: 10px;
-
-    border-radius: 50%;
-}
-
-
-.green-dot {
-    background: #4ade80;
-}
-
-
-.red-dot {
-    background: #f87171;
-}
-
-
-.yellow-dot {
-    background: #facc15;
 }
 
 
 /* ========================================= */
-/* DISTRIBUIÇÃO */
+/* SALVAR DADOS */
 /* ========================================= */
 
-.distribution {
-    display: flex;
+function salvarAdicionais() {
 
-    flex-direction: column;
+    localStorage.setItem(
+        CHAVE_ADICIONAIS,
+        JSON.stringify(
+            frotaAdicional
+        )
+    );
 
-    gap: 10px;
 }
 
 
-.distribution-row {
-    display: flex;
+function salvarAlteracoes() {
 
-    align-items: center;
+    localStorage.setItem(
+        CHAVE_ALTERACOES,
+        JSON.stringify(
+            frotaAlteracoes
+        )
+    );
 
-    justify-content: space-between;
-
-    margin-top: 5px;
-}
-
-
-.distribution-row div {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 4px;
-}
-
-
-.distribution-row span {
-    color: #7f8998;
-
-    font-size: 12px;
-}
-
-
-.bar {
-    height: 8px;
-
-    background: #252c38;
-
-    border-radius: 20px;
-
-    overflow: hidden;
-
-    margin-bottom: 15px;
-}
-
-
-.bar-fill {
-    height: 100%;
-
-    width: 0%;
-
-    background: #4ade80;
-
-    border-radius: 20px;
-
-    transition: width 0.3s ease;
 }
 
 
 /* ========================================= */
-/* TABELAS */
+/* ATUALIZAR SISTEMA */
 /* ========================================= */
 
-.fleet-panel {
-    margin-bottom: 30px;
+function atualizarSistema() {
+
+    atualizarIndicadores();
+
+    atualizarGrafico();
+
+    atualizarDistribuicao();
+
+    atualizarTabelaDashboard();
+
+    atualizarTabelaFrota();
+
 }
 
 
-.table-container {
-    width: 100%;
+/* ========================================= */
+/* DASHBOARD — INDICADORES */
+/* ========================================= */
 
-    overflow-x: auto;
+function atualizarIndicadores() {
+
+    const total =
+        frota.length;
+
+
+    const operando =
+        frota.filter(
+            veiculo =>
+                veiculo.status === "Rodando"
+        ).length;
+
+
+    const parados =
+        frota.filter(
+            veiculo =>
+                veiculo.status === "Parado"
+        ).length;
+
+
+    const reserva =
+        frota.filter(
+            veiculo =>
+                veiculo.status === "Reserva"
+        ).length;
+
+
+    document.getElementById(
+        "frotaTotal"
+    ).textContent = total;
+
+
+    document.getElementById(
+        "frotaOperando"
+    ).textContent = operando;
+
+
+    document.getElementById(
+        "frotaParada"
+    ).textContent = parados;
+
+
+    document.getElementById(
+        "frotaReserva"
+    ).textContent = reserva;
+
+
+    document.getElementById(
+        "legendOperando"
+    ).textContent = operando;
+
+
+    document.getElementById(
+        "legendParados"
+    ).textContent = parados;
+
+
+    document.getElementById(
+        "legendReserva"
+    ).textContent = reserva;
+
 }
 
 
-table {
-    width: 100%;
+/* ========================================= */
+/* DASHBOARD — DONUT */
+/* ========================================= */
 
-    border-collapse: collapse;
+function atualizarGrafico() {
+
+    const total =
+        frota.length;
+
+
+    const operando =
+        frota.filter(
+            veiculo =>
+                veiculo.status === "Rodando"
+        ).length;
+
+
+    const parados =
+        frota.filter(
+            veiculo =>
+                veiculo.status === "Parado"
+        ).length;
+
+
+    const percentual =
+        total > 0
+            ? Math.round(
+                (operando / total) * 100
+            )
+            : 0;
+
+
+    document.getElementById(
+        "percentualOperacao"
+    ).textContent =
+        percentual + "%";
+
+
+    const donut =
+        document.getElementById(
+            "donut"
+        );
+
+
+    if (total === 0) {
+
+        donut.style.background =
+            "#303846";
+
+        return;
+
+    }
+
+
+    const grausOperando =
+        (operando / total) * 360;
+
+
+    const grausParado =
+        (parados / total) * 360;
+
+
+    const fimParado =
+        grausOperando +
+        grausParado;
+
+
+    donut.style.background = `
+        conic-gradient(
+            #4ade80 0deg
+            ${grausOperando}deg,
+
+            #f87171
+            ${grausOperando}deg
+            ${fimParado}deg,
+
+            #facc15
+            ${fimParado}deg
+            360deg
+        )
+    `;
+
 }
 
 
-thead {
-    background: #1c222d;
-}
+/* ========================================= */
+/* DASHBOARD — DISTRIBUIÇÃO */
+/* ========================================= */
+
+function atualizarDistribuicao() {
+
+    const total =
+        frota.length;
 
 
-th {
-    text-align: left;
-
-    color: #8d96a5;
-
-    font-size: 12px;
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.5px;
-
-    padding: 14px;
-
-    white-space: nowrap;
-}
+    const raizen =
+        frota.filter(
+            veiculo =>
+                normalizar(
+                    veiculo.operacao
+                ) === "raizen"
+        ).length;
 
 
-td {
-    padding: 15px 14px;
-
-    border-top: 1px solid #252c38;
-
-    color: #dbe3ed;
-
-    font-size: 14px;
-
-    white-space: nowrap;
-}
+    const nexta =
+        frota.filter(
+            veiculo =>
+                normalizar(
+                    veiculo.operacao
+                ) === "nexta"
+        ).length;
 
 
-tbody tr:hover {
-    background: #1c222d;
+    document.getElementById(
+        "quantidadeRaizen"
+    ).textContent =
+        raizen;
+
+
+    document.getElementById(
+        "quantidadeNexta"
+    ).textContent =
+        nexta;
+
+
+    const percentualRaizen =
+        total > 0
+            ? (raizen / total) * 100
+            : 0;
+
+
+    const percentualNexta =
+        total > 0
+            ? (nexta / total) * 100
+            : 0;
+
+
+    document.getElementById(
+        "barraRaizen"
+    ).style.width =
+        percentualRaizen + "%";
+
+
+    document.getElementById(
+        "barraNexta"
+    ).style.width =
+        percentualNexta + "%";
+
 }
 
 
@@ -616,469 +617,1306 @@ tbody tr:hover {
 /* STATUS */
 /* ========================================= */
 
-.status-badge {
-    display: inline-flex;
+function obterClasseStatus(status) {
 
-    align-items: center;
+    if (
+        status === "Rodando"
+    ) {
 
-    padding: 6px 10px;
+        return "status-rodando";
 
-    border-radius: 20px;
-
-    font-size: 12px;
-
-    font-weight: bold;
-}
+    }
 
 
-.status-rodando {
-    background: rgba(74, 222, 128, 0.12);
+    if (
+        status === "Parado"
+    ) {
 
-    color: #4ade80;
-}
+        return "status-parado";
 
-
-.status-parado {
-    background: rgba(248, 113, 113, 0.12);
-
-    color: #f87171;
-}
+    }
 
 
-.status-reserva {
-    background: rgba(250, 204, 21, 0.12);
+    if (
+        status === "Reserva"
+    ) {
 
-    color: #facc15;
+        return "status-reserva";
+
+    }
+
+
+    return "";
+
 }
 
 
 /* ========================================= */
-/* AÇÕES DA TABELA */
+/* TABELA DASHBOARD */
 /* ========================================= */
 
-.table-actions {
-    display: flex;
+function atualizarTabelaDashboard() {
 
-    gap: 7px;
+    if (!tabelaDashboard) {
+        return;
+    }
+
+
+    tabelaDashboard.innerHTML = "";
+
+
+    const lista =
+        frota.slice(0, 10);
+
+
+    lista.forEach(
+        veiculo => {
+
+            const linha =
+                document.createElement(
+                    "tr"
+                );
+
+
+            linha.innerHTML = `
+
+                <td>
+                    ${valorSeguro(veiculo.cv)}
+                </td>
+
+                <td>
+                    ${valorSeguro(veiculo.sm1)}
+                </td>
+
+                <td>
+                    ${valorSeguro(veiculo.sm2)}
+                </td>
+
+                <td>
+                    ${valorSeguro(veiculo.area)}
+                </td>
+
+                <td>
+                    ${valorSeguro(veiculo.operacao)}
+                </td>
+
+                <td>
+                    ${valorSeguro(veiculo.suboperacao)}
+                </td>
+
+                <td>
+
+                    <span
+                        class="status-badge
+                        ${obterClasseStatus(
+                            veiculo.status
+                        )}"
+                    >
+                        ${valorSeguro(
+                            veiculo.status
+                        )}
+                    </span>
+
+                </td>
+
+            `;
+
+
+            tabelaDashboard.appendChild(
+                linha
+            );
+
+        }
+    );
+
 }
 
 
-.action-button {
-    border: 1px solid #303846;
+/* ========================================= */
+/* FILTROS DA FROTA */
+/* ========================================= */
 
-    background: #202631;
+function obterFrotaFiltrada() {
 
-    color: #dbe3ed;
+    const busca =
+        normalizar(
+            buscaFrota.value
+        );
 
-    padding: 7px 10px;
 
-    border-radius: 7px;
+    const area =
+        normalizar(
+            filtroArea.value
+        );
 
-    cursor: pointer;
 
-    font-size: 12px;
+    const operacao =
+        normalizar(
+            filtroOperacao.value
+        );
+
+
+    const status =
+        normalizar(
+            filtroStatus.value
+        );
+
+
+    return frota.filter(
+        veiculo => {
+
+            const textoBusca = [
+
+                veiculo.cv,
+                veiculo.sm1,
+                veiculo.sm2
+
+            ]
+                .map(normalizar)
+                .join(" ");
+
+
+            const passouBusca =
+                !busca ||
+                textoBusca.includes(
+                    busca
+                );
+
+
+            const passouArea =
+                !area ||
+                normalizar(
+                    veiculo.area
+                ) === area;
+
+
+            const passouOperacao =
+                !operacao ||
+                normalizar(
+                    veiculo.operacao
+                ) === operacao;
+
+
+            const passouStatus =
+                !status ||
+                normalizar(
+                    veiculo.status
+                ) === status;
+
+
+            return (
+                passouBusca &&
+                passouArea &&
+                passouOperacao &&
+                passouStatus
+            );
+
+        }
+    );
+
 }
 
 
-.action-button:hover {
-    background: #29313e;
+/* ========================================= */
+/* TABELA COMPLETA DA FROTA */
+/* ========================================= */
+
+function atualizarTabelaFrota() {
+
+    if (!tabelaFrota) {
+        return;
+    }
+
+
+    tabelaFrota.innerHTML = "";
+
+
+    const lista =
+        obterFrotaFiltrada();
+
+
+    document.getElementById(
+        "contadorFrota"
+    ).textContent =
+        lista.length +
+        (
+            lista.length === 1
+                ? " veículo"
+                : " veículos"
+        );
+
+
+    if (
+        lista.length === 0
+    ) {
+
+        tabelaFrota.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    Nenhum veículo encontrado.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+
+    lista.forEach(
+        veiculo => {
+
+            const linha =
+                document.createElement(
+                    "tr"
+                );
+
+
+            linha.innerHTML = `
+
+                <td>
+                    <strong>
+                        ${valorSeguro(
+                            veiculo.cv
+                        )}
+                    </strong>
+                </td>
+
+                <td>
+                    ${valorSeguro(
+                        veiculo.sm1
+                    )}
+                </td>
+
+                <td>
+                    ${valorSeguro(
+                        veiculo.sm2
+                    )}
+                </td>
+
+                <td>
+                    ${valorSeguro(
+                        veiculo.area
+                    )}
+                </td>
+
+                <td>
+                    ${valorSeguro(
+                        veiculo.operacao
+                    )}
+                </td>
+
+                <td>
+                    ${valorSeguro(
+                        veiculo.suboperacao
+                    )}
+                </td>
+
+                <td>
+
+                    <span
+                        class="status-badge
+                        ${obterClasseStatus(
+                            veiculo.status
+                        )}"
+                    >
+                        ${valorSeguro(
+                            veiculo.status
+                        )}
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <div class="table-actions">
+
+                        <button
+                            class="action-button edit"
+                            type="button"
+                            data-editar="${veiculo.id}"
+                        >
+                            ✏️ Editar
+                        </button>
+
+                    </div>
+
+                </td>
+
+            `;
+
+
+            tabelaFrota.appendChild(
+                linha
+            );
+
+        }
+    );
+
+
+    /* ================================= */
+    /* EVENTOS DOS BOTÕES EDITAR */
+    /* ================================= */
+
+    tabelaFrota
+        .querySelectorAll(
+            "[data-editar]"
+        )
+        .forEach(
+            botao => {
+
+                botao.addEventListener(
+                    "click",
+                    function () {
+
+                        abrirEdicao(
+                            this.dataset.editar
+                        );
+
+                    }
+                );
+
+            }
+        );
+
 }
 
 
-.action-button.edit {
-    color: #4ade80;
+/* ========================================= */
+/* ABRIR MODAL NOVO */
+/* ========================================= */
+
+function abrirNovoVeiculo() {
+
+    formVeiculo.reset();
+
+
+    veiculoId.value = "";
+
+
+    tituloModal.textContent =
+        "Novo veículo";
+
+
+    subtituloModal.textContent =
+        "Cadastre um veículo na frota";
+
+
+    selectOperacao.disabled =
+        true;
+
+
+    selectSuboperacao.disabled =
+        true;
+
+
+    selectOperacao.innerHTML = `
+        <option value="">
+            Selecione a área primeiro
+        </option>
+    `;
+
+
+    selectSuboperacao.innerHTML = `
+        <option value="">
+            Selecione a operação primeiro
+        </option>
+    `;
+
+
+    modal.classList.add(
+        "show"
+    );
+
 }
+
+
+/* ========================================= */
+/* ABRIR EDIÇÃO */
+/* ========================================= */
+
+function abrirEdicao(id) {
+
+    const veiculo =
+        frota.find(
+            item =>
+                String(item.id) ===
+                String(id)
+        );
+
+
+    if (!veiculo) {
+
+        alert(
+            "Veículo não encontrado."
+        );
+
+        return;
+
+    }
+
+
+    tituloModal.textContent =
+        "Editar veículo";
+
+
+    subtituloModal.textContent =
+        "Altere os dados do conjunto";
+
+
+    veiculoId.value =
+        veiculo.id;
+
+
+    document.getElementById(
+        "cv"
+    ).value =
+        veiculo.cv || "";
+
+
+    document.getElementById(
+        "sm1"
+    ).value =
+        veiculo.sm1 || "";
+
+
+    document.getElementById(
+        "sm2"
+    ).value =
+        veiculo.sm2 || "";
+
+
+    document.getElementById(
+        "status"
+    ).value =
+        veiculo.status || "Rodando";
+
+
+    /* =============================== */
+    /* ÁREA */
+    /* =============================== */
+
+    selectArea.value =
+        veiculo.area || "";
+
+
+    carregarOperacoes(
+        veiculo.area
+    );
+
+
+    selectOperacao.value =
+        veiculo.operacao || "";
+
+
+    carregarSuboperacoes(
+        veiculo.area,
+        veiculo.operacao
+    );
+
+
+    selectSuboperacao.value =
+        veiculo.suboperacao || "";
+
+
+    modal.classList.add(
+        "show"
+    );
+
+}
+
+
+/* ========================================= */
+/* FECHAR MODAL */
+/* ========================================= */
+
+function fecharModal() {
+
+    modal.classList.remove(
+        "show"
+    );
+
+}
+
+
+/* ========================================= */
+/* OPERAÇÕES POR ÁREA */
+/* ========================================= */
+
+function carregarOperacoes(
+    area
+) {
+
+    selectOperacao.innerHTML =
+        "";
+
+
+    selectSuboperacao.innerHTML =
+        "";
+
+
+    if (!area) {
+
+        selectOperacao.disabled =
+            true;
+
+        selectSuboperacao.disabled =
+            true;
+
+        selectOperacao.innerHTML = `
+            <option value="">
+                Selecione a área primeiro
+            </option>
+        `;
+
+        selectSuboperacao.innerHTML = `
+            <option value="">
+                Selecione a operação primeiro
+            </option>
+        `;
+
+        return;
+
+    }
+
+
+    selectOperacao.disabled =
+        false;
+
+
+    let operacoes = [];
+
+
+    if (
+        area === "Entrega"
+    ) {
+
+        operacoes = [
+            "Raízen"
+        ];
+
+    }
+
+
+    else if (
+        area === "Coleta"
+    ) {
+
+        operacoes = [
+            "Nexta"
+        ];
+
+    }
+
+
+    else if (
+        area === "JET"
+    ) {
+
+        operacoes = [
+            "JET"
+        ];
+
+    }
+
+
+    selectOperacao.innerHTML = `
+        <option value="">
+            Selecione
+        </option>
+    `;
+
+
+    operacoes.forEach(
+        operacao => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                operacao;
+
+
+            option.textContent =
+                operacao;
+
+
+            selectOperacao.appendChild(
+                option
+            );
+
+        }
+    );
+
+}
+
+
+/* ========================================= */
+/* SUBOPERAÇÕES */
+/* ========================================= */
+
+function carregarSuboperacoes(
+    area,
+    operacao
+) {
+
+    selectSuboperacao.innerHTML =
+        "";
+
+
+    if (
+        !area ||
+        !operacao
+    ) {
+
+        selectSuboperacao.disabled =
+            true;
+
+        selectSuboperacao.innerHTML = `
+            <option value="">
+                Selecione a operação primeiro
+            </option>
+        `;
+
+        return;
+
+    }
+
+
+    selectSuboperacao.disabled =
+        false;
+
+
+    let suboperacoes = [];
+
+
+    if (
+        area === "Entrega" &&
+        normalizar(
+            operacao
+        ) === "raizen"
+    ) {
+
+        suboperacoes = [
+            "City",
+            "Dedicado"
+        ];
+
+    }
+
+
+    else {
+
+        suboperacoes = [
+            "Geral"
+        ];
+
+    }
+
+
+    selectSuboperacao.innerHTML = `
+        <option value="">
+            Selecione
+        </option>
+    `;
+
+
+    suboperacoes.forEach(
+        suboperacao => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                suboperacao;
+
+
+            option.textContent =
+                suboperacao;
+
+
+            selectSuboperacao.appendChild(
+                option
+            );
+
+        }
+    );
+
+}
+
+
+/* ========================================= */
+/* EVENTO ÁREA */
+/* ========================================= */
+
+selectArea.addEventListener(
+    "change",
+    function () {
+
+        carregarOperacoes(
+            this.value
+        );
+
+    }
+);
+
+
+/* ========================================= */
+/* EVENTO OPERAÇÃO */
+/* ========================================= */
+
+selectOperacao.addEventListener(
+    "change",
+    function () {
+
+        carregarSuboperacoes(
+            selectArea.value,
+            this.value
+        );
+
+    }
+);
+
+
+/* ========================================= */
+/* SALVAR VEÍCULO */
+/* ========================================= */
+
+formVeiculo.addEventListener(
+    "submit",
+    function (evento) {
+
+        evento.preventDefault();
+
+
+        const id =
+            veiculoId.value;
+
+
+        const dados = {
+
+            cv:
+                document.getElementById(
+                    "cv"
+                ).value.trim(),
+
+            sm1:
+                document.getElementById(
+                    "sm1"
+                ).value.trim(),
+
+            sm2:
+                document.getElementById(
+                    "sm2"
+                ).value.trim(),
+
+            area:
+                selectArea.value,
+
+            operacao:
+                selectOperacao.value,
+
+            suboperacao:
+                selectSuboperacao.value,
+
+            status:
+                document.getElementById(
+                    "status"
+                ).value
+
+        };
+
+
+        /* ================================= */
+        /* VALIDAÇÃO */
+        /* ================================= */
+
+        if (
+            !dados.cv ||
+            !dados.sm1 ||
+            !dados.sm2 ||
+            !dados.area ||
+            !dados.operacao ||
+            !dados.suboperacao ||
+            !dados.status
+        ) {
+
+            alert(
+                "Preencha todos os campos."
+            );
+
+            return;
+
+        }
+
+
+        /* ================================= */
+        /* CV DUPLICADO */
+        /* ================================= */
+
+        const cvDuplicado =
+            frota.some(
+                veiculo => {
+
+                    if (
+                        String(
+                            veiculo.id
+                        ) ===
+                        String(id)
+                    ) {
+
+                        return false;
+
+                    }
+
+
+                    return (
+                        normalizar(
+                            veiculo.cv
+                        ) ===
+                        normalizar(
+                            dados.cv
+                        )
+                    );
+
+                }
+            );
+
+
+        if (cvDuplicado) {
+
+            alert(
+                "Já existe outro veículo com este CV."
+            );
+
+            return;
+
+        }
+
+
+        /* ================================= */
+        /* NOVO VEÍCULO */
+        /* ================================= */
+
+        if (!id) {
+
+            const novoVeiculo = {
+
+                id: gerarId(),
+
+                ...dados
+
+            };
+
+
+            frotaAdicional.push(
+                novoVeiculo
+            );
+
+
+            salvarAdicionais();
+
+
+            frota.push(
+                novoVeiculo
+            );
+
+        }
+
+
+        /* ================================= */
+        /* EDITAR VEÍCULO */
+        /* ================================= */
+
+        else {
+
+            const indice =
+                frota.findIndex(
+                    veiculo =>
+                        String(
+                            veiculo.id
+                        ) ===
+                        String(id)
+                );
+
+
+            if (
+                indice === -1
+            ) {
+
+                alert(
+                    "Veículo não encontrado."
+                );
+
+                return;
+
+            }
+
+
+            const ehAdicional =
+                frotaAdicional.some(
+                    veiculo =>
+                        String(
+                            veiculo.id
+                        ) ===
+                        String(id)
+                );
+
+
+            if (ehAdicional) {
+
+                const indiceAdicional =
+                    frotaAdicional.findIndex(
+                        veiculo =>
+                            String(
+                                veiculo.id
+                            ) ===
+                            String(id)
+                    );
+
+
+                frotaAdicional[
+                    indiceAdicional
+                ] = {
+
+                    ...frotaAdicional[
+                        indiceAdicional
+                    ],
+
+                    ...dados
+
+                };
+
+
+                salvarAdicionais();
+
+            }
+
+
+            else {
+
+                /*
+                 * Veículo veio do frota.json.
+                 *
+                 * Não alteramos o JSON.
+                 *
+                 * Criamos um override local.
+                 */
+
+                frotaAlteracoes[id] =
+                    dados;
+
+
+                salvarAlteracoes();
+
+            }
+
+
+            frota[indice] = {
+
+                ...frota[indice],
+
+                ...dados
+
+            };
+
+        }
+
+
+        /* ================================= */
+        /* ATUALIZA TUDO */
+        /* ================================= */
+
+        atualizarSistema();
+
+
+        fecharModal();
+
+
+        alert(
+            id
+                ? "Veículo atualizado com sucesso!"
+                : "Veículo cadastrado com sucesso!"
+        );
+
+    }
+);
+
+
+/* ========================================= */
+/* BOTÕES MODAL */
+/* ========================================= */
+
+btnNovoVeiculo.onclick =
+    abrirNovoVeiculo;
+
+
+btnDashboardNovo.onclick =
+    abrirNovoVeiculo;
+
+
+btnFecharModal.onclick =
+    fecharModal;
+
+
+btnCancelar.onclick =
+    fecharModal;
+
+
+modal.addEventListener(
+    "click",
+    function (evento) {
+
+        if (
+            evento.target === modal
+        ) {
+
+            fecharModal();
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "keydown",
+    function (evento) {
+
+        if (
+            evento.key === "Escape"
+        ) {
+
+            fecharModal();
+
+        }
+
+    }
+);
 
 
 /* ========================================= */
 /* FILTROS */
 /* ========================================= */
 
-.filtros-panel {
-    margin-bottom: 20px;
-}
+buscaFrota.addEventListener(
+    "input",
+    atualizarTabelaFrota
+);
 
 
-.filtros-grid {
-    display: grid;
+filtroArea.addEventListener(
+    "change",
+    atualizarTabelaFrota
+);
 
-    grid-template-columns:
-        2fr 1fr 1fr 1fr;
 
-    gap: 15px;
+filtroOperacao.addEventListener(
+    "change",
+    atualizarTabelaFrota
+);
+
+
+filtroStatus.addEventListener(
+    "change",
+    atualizarTabelaFrota
+);
+
+
+/* ========================================= */
+/* NAVEGAÇÃO */
+/* ========================================= */
+
+const paginas = {
+
+    dashboard:
+        document.getElementById(
+            "paginaDashboard"
+        ),
+
+    frota:
+        document.getElementById(
+            "paginaFrota"
+        ),
+
+    motoristas:
+        document.getElementById(
+            "paginaMotoristas"
+        ),
+
+    escala:
+        document.getElementById(
+            "paginaEscala"
+        ),
+
+    manutencao:
+        document.getElementById(
+            "paginaManutencao"
+        ),
+
+    ocorrencias:
+        document.getElementById(
+            "paginaOcorrencias"
+        ),
+
+    configuracoes:
+        document.getElementById(
+            "paginaConfiguracoes"
+        )
+
+};
+
+
+const titulos = {
+
+    dashboard: [
+        "Dashboard",
+        "Visão geral da operação"
+    ],
+
+    frota: [
+        "Frota",
+        "Gestão dos veículos e conjuntos"
+    ],
+
+    motoristas: [
+        "Motoristas",
+        "Cadastro e gestão dos motoristas"
+    ],
+
+    escala: [
+        "Escala",
+        "Controle das jornadas e escalas"
+    ],
+
+    manutencao: [
+        "Manutenção",
+        "Controle de manutenção da frota"
+    ],
+
+    ocorrencias: [
+        "Ocorrências",
+        "Registro e acompanhamento operacional"
+    ],
+
+    configuracoes: [
+        "Configurações",
+        "Configurações do sistema"
+    ]
+
+};
+
+
+document
+    .querySelectorAll(
+        ".menu-item[data-page]"
+    )
+    .forEach(
+        item => {
+
+            item.addEventListener(
+                "click",
+                function (evento) {
+
+                    evento.preventDefault();
+
+
+                    const pagina =
+                        this.dataset.page;
+
+
+                    abrirPagina(
+                        pagina
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+function abrirPagina(
+    pagina
+) {
+
+    Object.values(
+        paginas
+    ).forEach(
+        elemento => {
+
+            elemento.classList.add(
+                "hidden"
+            );
+
+        }
+    );
+
+
+    if (
+        paginas[pagina]
+    ) {
+
+        paginas[pagina]
+            .classList.remove(
+                "hidden"
+            );
+
+    }
+
+
+    document
+        .querySelectorAll(
+            ".menu-item[data-page]"
+        )
+        .forEach(
+            item => {
+
+                item.classList.toggle(
+                    "active",
+                    item.dataset.page ===
+                    pagina
+                );
+
+            }
+        );
+
+
+    const titulo =
+        titulos[pagina];
+
+
+    if (titulo) {
+
+        document.getElementById(
+            "tituloPagina"
+        ).textContent =
+            titulo[0];
+
+
+        document.getElementById(
+            "subtituloPagina"
+        ).textContent =
+            titulo[1];
+
+    }
+
 }
 
 
 /* ========================================= */
-/* FORMULÁRIOS */
+/* INICIALIZAÇÃO */
 /* ========================================= */
 
-.form-group {
-    display: flex;
+abrirPagina(
+    "dashboard"
+);
 
-    flex-direction: column;
 
-    gap: 7px;
-}
-
-
-.form-group label {
-    color: #cbd5e1;
-
-    font-size: 13px;
-
-    font-weight: bold;
-}
-
-
-.form-group input,
-.form-group select {
-    width: 100%;
-
-    padding: 12px 13px;
-
-    border-radius: 8px;
-
-    border: 1px solid #303846;
-
-    background: #10151d;
-
-    color: #f1f5f9;
-
-    outline: none;
-}
-
-
-.form-group input:focus,
-.form-group select:focus {
-    border-color: #4ade80;
-}
-
-
-.form-group select:disabled {
-    opacity: 0.5;
-
-    cursor: not-allowed;
-}
-
-
-/* ========================================= */
-/* BOTÕES */
-/* ========================================= */
-
-.primary-button {
-    border: none;
-
-    background: #4ade80;
-
-    color: #07110b;
-
-    font-weight: bold;
-
-    padding: 11px 16px;
-
-    border-radius: 9px;
-
-    cursor: pointer;
-
-    transition: 0.2s;
-
-    white-space: nowrap;
-}
-
-
-.primary-button:hover {
-    filter: brightness(1.08);
-
-    transform: translateY(-1px);
-}
-
-
-.secondary-button {
-    border: 1px solid #303846;
-
-    background: #202631;
-
-    color: #dbe3ed;
-
-    padding: 11px 16px;
-
-    border-radius: 9px;
-
-    cursor: pointer;
-}
-
-
-.secondary-button:hover {
-    background: #29313e;
-}
-
-
-/* ========================================= */
-/* MODAL */
-/* ========================================= */
-
-.modal-overlay {
-    position: fixed;
-
-    inset: 0;
-
-    background: rgba(0, 0, 0, 0.72);
-
-    display: none;
-
-    justify-content: center;
-
-    align-items: center;
-
-    z-index: 9999;
-
-    padding: 20px;
-}
-
-
-.modal-overlay.show {
-    display: flex;
-}
-
-
-.modal {
-    width: 100%;
-
-    max-width: 760px;
-
-    max-height: 90vh;
-
-    overflow-y: auto;
-
-    background: #171c25;
-
-    border: 1px solid #303846;
-
-    border-radius: 16px;
-
-    box-shadow:
-        0 25px 70px rgba(0, 0, 0, 0.5);
-}
-
-
-.modal-header {
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: flex-start;
-
-    padding: 24px;
-
-    border-bottom: 1px solid #252c38;
-}
-
-
-.modal-header h2 {
-    margin-bottom: 5px;
-}
-
-
-.modal-header span {
-    color: #7f8998;
-
-    font-size: 13px;
-}
-
-
-.close-button {
-    border: none;
-
-    background: transparent;
-
-    color: #9aa3b2;
-
-    font-size: 28px;
-
-    cursor: pointer;
-
-    line-height: 1;
-}
-
-
-.close-button:hover {
-    color: #ffffff;
-}
-
-
-/* ========================================= */
-/* FORM MODAL */
-/* ========================================= */
-
-#formVeiculo {
-    padding: 24px;
-}
-
-
-.form-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-
-    gap: 18px;
-}
-
-
-.form-actions {
-    display: flex;
-
-    justify-content: flex-end;
-
-    gap: 10px;
-
-    margin-top: 25px;
-
-    padding-top: 20px;
-
-    border-top: 1px solid #252c38;
-}
-
-
-/* ========================================= */
-/* PÁGINAS FUTURAS */
-/* ========================================= */
-
-.empty-page {
-    min-height: 450px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    background: #171c25;
-
-    border: 1px solid #252c38;
-
-    border-radius: 14px;
-
-    text-align: center;
-}
-
-
-.empty-page span {
-    font-size: 50px;
-
-    margin-bottom: 15px;
-}
-
-
-.empty-page h2 {
-    margin-bottom: 8px;
-}
-
-
-.empty-page p {
-    color: #7f8998;
-}
-
-
-/* ========================================= */
-/* RESPONSIVO */
-/* ========================================= */
-
-@media (max-width: 1100px) {
-
-    .cards {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .filtros-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
-}
-
-
-@media (max-width: 750px) {
-
-    .sidebar {
-        width: 70px;
-
-        padding: 20px 8px;
-    }
-
-
-    .logo span,
-    .menu-item span {
-        display: none;
-    }
-
-
-    .logo {
-        justify-content: center;
-
-        padding-left: 0;
-
-        padding-right: 0;
-    }
-
-
-    .menu-item {
-        justify-content: center;
-    }
-
-
-    .main {
-        margin-left: 70px;
-
-        padding: 20px;
-    }
-
-
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-
-
-    .filtros-grid {
-        grid-template-columns: 1fr;
-    }
-
-
-    .page-heading {
-        flex-direction: column;
-
-        align-items: flex-start;
-    }
-
-}
-
-
-@media (max-width: 550px) {
-
-    .cards {
-        grid-template-columns: 1fr;
-    }
-
-
-    .topbar {
-        align-items: flex-start;
-
-        gap: 20px;
-
-        flex-direction: column;
-    }
-
-
-    .status-container {
-        flex-direction: column;
-    }
-
-}
+carregarFrota();
