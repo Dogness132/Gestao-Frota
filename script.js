@@ -1,149 +1,273 @@
-// ================================
+// ========================================
 // GESTÃO DE FROTA
-// ================================
+// ========================================
+
+let frota = [];
 
 
-// Dados temporários da frota.
-// Depois vamos substituir isso pelo banco de dados.
+// ========================================
+// CARREGAR DADOS
+// ========================================
 
-const frota = [
+async function carregarFrota() {
 
-    {
-        cv: "ABC-1234",
-        sm1: "XYZ-1111",
-        sm2: "XYZ-2222",
-        area: "Entrega",
-        operacao: "Raízen",
-        suboperacao: "City",
-        status: "Rodando"
-    },
+    try {
 
-    {
-        cv: "DEF-5678",
-        sm1: "XYZ-3333",
-        sm2: "XYZ-4444",
-        area: "Entrega",
-        operacao: "Raízen",
-        suboperacao: "Dedicado",
-        status: "Rodando"
-    },
+        const resposta = await fetch("data/frota.json");
 
-    {
-        cv: "GHI-9012",
-        sm1: "XYZ-5555",
-        sm2: "XYZ-6666",
-        area: "Coleta",
-        operacao: "Nexta",
-        suboperacao: "Geral",
-        status: "Parado"
-    },
+        if (!resposta.ok) {
+            throw new Error("Não foi possível carregar a frota.");
+        }
 
-    {
-        cv: "JKL-3456",
-        sm1: "XYZ-7777",
-        sm2: "XYZ-8888",
-        area: "Entrega",
-        operacao: "Raízen",
-        suboperacao: "City",
-        status: "Rodando"
-    },
+        frota = await resposta.json();
 
-    {
-        cv: "MNO-7890",
-        sm1: "XYZ-9999",
-        sm2: "XYZ-1010",
-        area: "Entrega",
-        operacao: "Raízen",
-        suboperacao: "Dedicado",
-        status: "Rodando"
-    },
+        atualizarSistema();
 
-    {
-        cv: "PQR-1234",
-        sm1: "XYZ-1112",
-        sm2: "XYZ-1314",
-        area: "Coleta",
-        operacao: "Nexta",
-        suboperacao: "Geral",
-        status: "Rodando"
-    },
+    } catch (erro) {
 
-    {
-        cv: "STU-5678",
-        sm1: "XYZ-1516",
-        sm2: "XYZ-1718",
-        area: "Entrega",
-        operacao: "Raízen",
-        suboperacao: "City",
-        status: "Rodando"
-    },
+        console.error("Erro ao carregar frota:", erro);
 
-    {
-        cv: "VWX-9012",
-        sm1: "XYZ-1920",
-        sm2: "XYZ-2122",
-        area: "Coleta",
-        operacao: "Nexta",
-        suboperacao: "Geral",
-        status: "Reserva"
     }
 
-];
+}
 
 
-// ================================
-// CALCULANDO OS INDICADORES
-// ================================
+// ========================================
+// ATUALIZAR SISTEMA
+// ========================================
 
-const total = frota.length;
+function atualizarSistema() {
 
-const rodando = frota.filter(
-    veiculo => veiculo.status === "Rodando"
-).length;
+    atualizarIndicadores();
 
-const parado = frota.filter(
-    veiculo => veiculo.status === "Parado"
-).length;
+    atualizarTabela();
 
-const reserva = frota.filter(
-    veiculo => veiculo.status === "Reserva"
-).length;
+    atualizarDistribuicao();
+
+}
 
 
-// ================================
-// ATUALIZANDO O DASHBOARD
-// ================================
+// ========================================
+// INDICADORES
+// ========================================
 
-document.getElementById("frotaTotal").textContent = total;
+function atualizarIndicadores() {
 
-document.getElementById("frotaOperando").textContent = rodando;
+    const total = frota.length;
 
-document.getElementById("frotaParada").textContent = parado;
+    const rodando = frota.filter(
+        veiculo => veiculo.status === "Rodando"
+    ).length;
 
-document.getElementById("frotaReserva").textContent = reserva;
+    const parado = frota.filter(
+        veiculo => veiculo.status === "Parado"
+    ).length;
 
-
-// Percentual da frota operando
-
-const percentual = total > 0
-    ? Math.round((rodando / total) * 100)
-    : 0;
-
-document.getElementById(
-    "percentualOperacao"
-).textContent = `${percentual}%`;
+    const reserva = frota.filter(
+        veiculo => veiculo.status === "Reserva"
+    ).length;
 
 
-// ================================
-// LOG
-// ================================
+    document.getElementById("frotaTotal").textContent = total;
 
-console.log("Sistema de Gestão de Frota iniciado.");
+    document.getElementById("frotaOperando").textContent = rodando;
 
-console.log("Frota total:", total);
+    document.getElementById("frotaParada").textContent = parado;
 
-console.log("Veículos rodando:", rodando);
+    document.getElementById("frotaReserva").textContent = reserva;
 
-console.log("Veículos parados:", parado);
 
-console.log("Veículos reserva:", reserva);
+    const percentual = total > 0
+        ? Math.round((rodando / total) * 100)
+        : 0;
+
+
+    document.getElementById(
+        "percentualOperacao"
+    ).textContent = `${percentual}%`;
+
+
+    atualizarGrafico(
+        rodando,
+        parado,
+        reserva
+    );
+
+}
+
+
+// ========================================
+// GRÁFICO
+// ========================================
+
+function atualizarGrafico(
+    rodando,
+    parado,
+    reserva
+) {
+
+    const total = rodando + parado + reserva;
+
+    if (total === 0) {
+        return;
+    }
+
+
+    const porcentagemRodando =
+        (rodando / total) * 100;
+
+    const porcentagemParado =
+        (parado / total) * 100;
+
+    const porcentagemReserva =
+        (reserva / total) * 100;
+
+
+    const inicioParado =
+        porcentagemRodando;
+
+    const fimParado =
+        porcentagemRodando + porcentagemParado;
+
+
+    const grafico = document.querySelector(".donut");
+
+
+    grafico.style.background = `
+        conic-gradient(
+            #22c55e 0% ${porcentagemRodando}%,
+            #ef4444 ${inicioParado}% ${fimParado}%,
+            #eab308 ${fimParado}% 100%
+        )
+    `;
+
+}
+
+
+// ========================================
+// TABELA DA FROTA
+// ========================================
+
+function atualizarTabela() {
+
+    const tabela = document.querySelector("tbody");
+
+    tabela.innerHTML = "";
+
+
+    frota.forEach(veiculo => {
+
+        const linha = document.createElement("tr");
+
+
+        let classeStatus = "";
+
+        if (veiculo.status === "Rodando") {
+            classeStatus = "active-status";
+        }
+
+        if (veiculo.status === "Parado") {
+            classeStatus = "stopped-status";
+        }
+
+        if (veiculo.status === "Reserva") {
+            classeStatus = "reserve-status";
+        }
+
+
+        linha.innerHTML = `
+
+            <td>${veiculo.cv}</td>
+
+            <td>${veiculo.sm1}</td>
+
+            <td>${veiculo.sm2}</td>
+
+            <td>${veiculo.area}</td>
+
+            <td>${veiculo.operacao}</td>
+
+            <td>${veiculo.suboperacao}</td>
+
+            <td>
+                <span class="status ${classeStatus}">
+                    ● ${veiculo.status}
+                </span>
+            </td>
+
+        `;
+
+
+        tabela.appendChild(linha);
+
+    });
+
+}
+
+
+// ========================================
+// DISTRIBUIÇÃO POR OPERAÇÃO
+// ========================================
+
+function atualizarDistribuicao() {
+
+    const raizen = frota.filter(
+        veiculo => veiculo.operacao === "Raízen"
+    ).length;
+
+
+    const nexta = frota.filter(
+        veiculo => veiculo.operacao === "Nexta"
+    ).length;
+
+
+    const total = frota.length;
+
+
+    const percentualRaizen =
+        total > 0
+            ? (raizen / total) * 100
+            : 0;
+
+
+    const percentualNexta =
+        total > 0
+            ? (nexta / total) * 100
+            : 0;
+
+
+    const barras =
+        document.querySelectorAll(".bar-fill");
+
+
+    if (barras.length >= 2) {
+
+        barras[0].style.width =
+            `${percentualRaizen}%`;
+
+        barras[1].style.width =
+            `${percentualNexta}%`;
+
+    }
+
+
+    const valores =
+        document.querySelectorAll(".distribution-row > strong");
+
+
+    if (valores.length >= 2) {
+
+        valores[0].textContent = raizen;
+
+        valores[1].textContent = nexta;
+
+    }
+
+}
+
+
+// ========================================
+// INICIAR SISTEMA
+// ========================================
+
+carregarFrota();
