@@ -7,7 +7,7 @@
     "area": "Entrega",
     "operacao": "Raízen",
     "suboperacao": "City",
-    "status": "Rodando"
+    "status": "Parado"
   },
   {
     "id": 2,
@@ -17,7 +17,7 @@
     "area": "Entrega",
     "operacao": "Raízen",
     "suboperacao": "Dedicado",
-    "status": "Rodando"
+    "status": "Parado"
   },
   {
     "id": 3,
@@ -27,7 +27,7 @@
     "area": "Coleta",
     "operacao": "Nexta",
     "suboperacao": "Geral",
-    "status": "Rodando"
+    "status": "Parado"
   },
   {
     "id": 4,
