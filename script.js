@@ -2,6 +2,11 @@
 // GESTÃO DE FROTA
 // ========================================
 
+
+// ========================================
+// VARIÁVEL PRINCIPAL
+// ========================================
+
 let frota = [];
 
 
@@ -16,34 +21,33 @@ async function carregarFrota() {
         const resposta =
             await fetch("data/frota.json");
 
+
         if (!resposta.ok) {
 
             throw new Error(
-                "Não foi possível carregar a frota."
+                "Não foi possível carregar o arquivo frota.json."
             );
 
         }
+
 
         const frotaBase =
             await resposta.json();
 
 
-        // Verifica se existem veículos
-        // cadastrados anteriormente neste navegador
-
         const frotaSalva =
-            JSON.parse(
-                localStorage.getItem("frota")
-            );
+            localStorage.getItem("frota");
 
 
-        if (Array.isArray(frotaSalva)) {
+        if (frotaSalva) {
 
-            frota = frotaSalva;
+            frota =
+                JSON.parse(frotaSalva);
 
         } else {
 
-            frota = frotaBase;
+            frota =
+                frotaBase;
 
             salvarFrota();
 
@@ -57,7 +61,7 @@ async function carregarFrota() {
     catch (erro) {
 
         console.error(
-            "Erro ao carregar frota:",
+            "Erro ao carregar a frota:",
             erro
         );
 
@@ -67,7 +71,7 @@ async function carregarFrota() {
 
 
 // ========================================
-// SALVAR FROTA
+// SALVAR NO NAVEGADOR
 // ========================================
 
 function salvarFrota() {
@@ -101,7 +105,8 @@ function atualizarSistema() {
 
 function atualizarIndicadores() {
 
-    const total = frota.length;
+    const total =
+        frota.length;
 
 
     const rodando =
@@ -127,22 +132,44 @@ function atualizarIndicadores() {
 
     document.getElementById(
         "frotaTotal"
-    ).textContent = total;
+    ).textContent =
+        total;
 
 
     document.getElementById(
         "frotaOperando"
-    ).textContent = rodando;
+    ).textContent =
+        rodando;
 
 
     document.getElementById(
         "frotaParada"
-    ).textContent = parado;
+    ).textContent =
+        parado;
 
 
     document.getElementById(
         "frotaReserva"
-    ).textContent = reserva;
+    ).textContent =
+        reserva;
+
+
+    document.getElementById(
+        "legendaRodando"
+    ).textContent =
+        rodando;
+
+
+    document.getElementById(
+        "legendaParado"
+    ).textContent =
+        parado;
+
+
+    document.getElementById(
+        "legendaReserva"
+    ).textContent =
+        reserva;
 
 
     const percentual =
@@ -184,8 +211,26 @@ function atualizarGrafico(
         reserva;
 
 
-    if (total === 0) {
+    const grafico =
+        document.querySelector(
+            ".donut"
+        );
+
+
+    if (!grafico) {
+
         return;
+
+    }
+
+
+    if (total === 0) {
+
+        grafico.style.background =
+            "#334155";
+
+        return;
+
     }
 
 
@@ -206,18 +251,24 @@ function atualizarGrafico(
         porcentagemParado;
 
 
-    const grafico =
-        document.querySelector(
-            ".donut"
-        );
-
-
     grafico.style.background = `
+
         conic-gradient(
-            #22c55e 0% ${porcentagemRodando}%,
-            #ef4444 ${inicioParado}% ${fimParado}%,
-            #eab308 ${fimParado}% 100%
+
+            #22c55e
+            0%
+            ${porcentagemRodando}%,
+
+            #ef4444
+            ${inicioParado}%
+            ${fimParado}%,
+
+            #eab308
+            ${fimParado}%
+            100%
+
         )
+
     `;
 
 }
@@ -230,86 +281,115 @@ function atualizarGrafico(
 function atualizarTabela() {
 
     const tabela =
-        document.querySelector("tbody");
+        document.getElementById(
+            "tabelaFrota"
+        );
+
+
+    if (!tabela) {
+
+        return;
+
+    }
 
 
     tabela.innerHTML = "";
 
 
-    frota.forEach(veiculo => {
+    frota.forEach(
+        veiculo => {
 
-        const linha =
-            document.createElement("tr");
+            const linha =
+                document.createElement(
+                    "tr"
+                );
 
 
-        let classeStatus = "";
+            let classeStatus =
+                "";
 
 
-        if (
-            veiculo.status ===
-            "Rodando"
-        ) {
+            if (
+                veiculo.status ===
+                "Rodando"
+            ) {
 
-            classeStatus =
-                "active-status";
+                classeStatus =
+                    "active-status";
+
+            }
+
+
+            else if (
+                veiculo.status ===
+                "Parado"
+            ) {
+
+                classeStatus =
+                    "stopped-status";
+
+            }
+
+
+            else if (
+                veiculo.status ===
+                "Reserva"
+            ) {
+
+                classeStatus =
+                    "reserve-status";
+
+            }
+
+
+            linha.innerHTML = `
+
+                <td>
+                    ${veiculo.cv}
+                </td>
+
+                <td>
+                    ${veiculo.sm1}
+                </td>
+
+                <td>
+                    ${veiculo.sm2}
+                </td>
+
+                <td>
+                    ${veiculo.area}
+                </td>
+
+                <td>
+                    ${veiculo.operacao}
+                </td>
+
+                <td>
+                    ${veiculo.suboperacao}
+                </td>
+
+                <td>
+
+                    <span
+                        class="status ${classeStatus}"
+                    >
+
+                        ●
+                        ${veiculo.status}
+
+                    </span>
+
+                </td>
+
+            `;
+
+
+            tabela.appendChild(
+                linha
+            );
 
         }
-
-
-        if (
-            veiculo.status ===
-            "Parado"
-        ) {
-
-            classeStatus =
-                "stopped-status";
-
-        }
-
-
-        if (
-            veiculo.status ===
-            "Reserva"
-        ) {
-
-            classeStatus =
-                "reserve-status";
-
-        }
-
-
-        linha.innerHTML = `
-
-            <td>${veiculo.cv}</td>
-
-            <td>${veiculo.sm1}</td>
-
-            <td>${veiculo.sm2}</td>
-
-            <td>${veiculo.area}</td>
-
-            <td>${veiculo.operacao}</td>
-
-            <td>${veiculo.suboperacao}</td>
-
-            <td>
-
-                <span
-                    class="status ${classeStatus}"
-                >
-
-                    ● ${veiculo.status}
-
-                </span>
-
-            </td>
-
-        `;
-
-
-        tabela.appendChild(linha);
-
-    });
+    );
 
 }
 
@@ -340,6 +420,18 @@ function atualizarDistribuicao() {
         frota.length;
 
 
+    document.getElementById(
+        "totalRaizen"
+    ).textContent =
+        raizen;
+
+
+    document.getElementById(
+        "totalNexta"
+    ).textContent =
+        nexta;
+
+
     const percentualRaizen =
         total > 0
             ? (raizen / total) * 100
@@ -352,44 +444,22 @@ function atualizarDistribuicao() {
             : 0;
 
 
-    const barras =
-        document.querySelectorAll(
-            ".bar-fill"
-        );
+    document.getElementById(
+        "barraRaizen"
+    ).style.width =
+        `${percentualRaizen}%`;
 
 
-    if (barras.length >= 2) {
-
-        barras[0].style.width =
-            `${percentualRaizen}%`;
-
-        barras[1].style.width =
-            `${percentualNexta}%`;
-
-    }
-
-
-    const valores =
-        document.querySelectorAll(
-            ".distribution-row > strong"
-        );
-
-
-    if (valores.length >= 2) {
-
-        valores[0].textContent =
-            raizen;
-
-        valores[1].textContent =
-            nexta;
-
-    }
+    document.getElementById(
+        "barraNexta"
+    ).style.width =
+        `${percentualNexta}%`;
 
 }
 
 
 // ========================================
-// MODAL
+// ELEMENTOS DO MODAL
 // ========================================
 
 const modal =
@@ -422,21 +492,22 @@ const formVeiculo =
     );
 
 
-// Abrir
+// ========================================
+// ABRIR MODAL
+// ========================================
 
-btnNovoVeiculo.addEventListener(
-    "click",
-    () => {
+function abrirModalVeiculo() {
 
-        modal.classList.add(
-            "show"
-        );
+    modal.classList.add(
+        "show"
+    );
 
-    }
-);
+}
 
 
-// Fechar
+// ========================================
+// FECHAR MODAL
+// ========================================
 
 function fecharModal() {
 
@@ -444,11 +515,23 @@ function fecharModal() {
         "show"
     );
 
+
     formVeiculo.reset();
+
 
     resetarSelecoes();
 
 }
+
+
+// ========================================
+// EVENTOS DOS BOTÕES
+// ========================================
+
+btnNovoVeiculo.addEventListener(
+    "click",
+    abrirModalVeiculo
+);
 
 
 btnFecharModal.addEventListener(
@@ -464,7 +547,28 @@ btnCancelar.addEventListener(
 
 
 // ========================================
-// CAMPOS DEPENDENTES
+// FECHAR CLICANDO FORA
+// ========================================
+
+modal.addEventListener(
+    "click",
+    evento => {
+
+        if (
+            evento.target ===
+            modal
+        ) {
+
+            fecharModal();
+
+        }
+
+    }
+);
+
+
+// ========================================
+// CAMPOS
 // ========================================
 
 const campoArea =
@@ -485,7 +589,9 @@ const campoSuboperacao =
     );
 
 
-// Quando mudar a Área
+// ========================================
+// ÁREA → OPERAÇÃO
+// ========================================
 
 campoArea.addEventListener(
     "change",
@@ -499,9 +605,12 @@ function atualizarOperacoes() {
         campoArea.value;
 
 
-    campoOperacao.innerHTML = "";
+    campoOperacao.innerHTML =
+        "";
 
-    campoSuboperacao.innerHTML = "";
+
+    campoSuboperacao.innerHTML =
+        "";
 
 
     campoSuboperacao.disabled =
@@ -513,17 +622,24 @@ function atualizarOperacoes() {
         campoOperacao.disabled =
             true;
 
+
         campoOperacao.innerHTML = `
+
             <option value="">
                 Selecione a área primeiro
             </option>
+
         `;
 
+
         campoSuboperacao.innerHTML = `
+
             <option value="">
                 Selecione a operação primeiro
             </option>
+
         `;
+
 
         return;
 
@@ -535,6 +651,7 @@ function atualizarOperacoes() {
 
 
     campoOperacao.innerHTML = `
+
         <option value="">
             Selecione
         </option>
@@ -546,20 +663,14 @@ function atualizarOperacoes() {
         <option value="Raízen">
             Raízen
         </option>
-    `;
 
-
-    campoSuboperacao.innerHTML = `
-        <option value="">
-            Selecione a operação primeiro
-        </option>
     `;
 
 }
 
 
 // ========================================
-// QUANDO MUDAR OPERAÇÃO
+// OPERAÇÃO → SUBOPERAÇÃO
 // ========================================
 
 campoOperacao.addEventListener(
@@ -582,11 +693,29 @@ function atualizarSuboperacoes() {
         "";
 
 
+    if (!operacao) {
+
+        campoSuboperacao.disabled =
+            true;
+
+
+        campoSuboperacao.innerHTML = `
+
+            <option value="">
+                Selecione a operação primeiro
+            </option>
+
+        `;
+
+
+        return;
+
+    }
+
+
     campoSuboperacao.disabled =
         false;
 
-
-    // Entrega + Raízen
 
     if (
         area === "Entrega" &&
@@ -609,13 +738,11 @@ function atualizarSuboperacoes() {
 
         `;
 
+
         return;
 
     }
 
-
-    // Todas as outras combinações
-    // atualmente usam Geral
 
     campoSuboperacao.innerHTML = `
 
@@ -637,33 +764,38 @@ function resetarSelecoes() {
     campoOperacao.disabled =
         true;
 
+
     campoSuboperacao.disabled =
         true;
 
 
     campoOperacao.innerHTML = `
+
         <option value="">
             Selecione a área primeiro
         </option>
+
     `;
 
 
     campoSuboperacao.innerHTML = `
+
         <option value="">
             Selecione a operação primeiro
         </option>
+
     `;
 
 }
 
 
 // ========================================
-// SALVAR NOVO VEÍCULO
+// SALVAR VEÍCULO
 // ========================================
 
 formVeiculo.addEventListener(
     "submit",
-    function (evento) {
+    evento => {
 
         evento.preventDefault();
 
@@ -673,12 +805,14 @@ formVeiculo.addEventListener(
             id:
                 Date.now(),
 
+
             cv:
                 document
                     .getElementById("cv")
                     .value
                     .trim()
                     .toUpperCase(),
+
 
             sm1:
                 document
@@ -687,6 +821,7 @@ formVeiculo.addEventListener(
                     .trim()
                     .toUpperCase(),
 
+
             sm2:
                 document
                     .getElementById("sm2")
@@ -694,14 +829,18 @@ formVeiculo.addEventListener(
                     .trim()
                     .toUpperCase(),
 
+
             area:
                 campoArea.value,
+
 
             operacao:
                 campoOperacao.value,
 
+
             suboperacao:
                 campoSuboperacao.value,
+
 
             status:
                 document
@@ -711,7 +850,9 @@ formVeiculo.addEventListener(
         };
 
 
-        // Verificar CV duplicado
+        // ====================================
+        // VERIFICAR CV DUPLICADO
+        // ====================================
 
         const existe =
             frota.some(
@@ -727,29 +868,38 @@ formVeiculo.addEventListener(
                 "Já existe um veículo com este CV."
             );
 
+
             return;
 
         }
 
 
-        // Adicionar
+        // ====================================
+        // ADICIONAR
+        // ====================================
 
         frota.push(
             novoVeiculo
         );
 
 
-        // Salvar no navegador
+        // ====================================
+        // SALVAR
+        // ====================================
 
         salvarFrota();
 
 
-        // Atualizar tudo
+        // ====================================
+        // ATUALIZAR TUDO
+        // ====================================
 
         atualizarSistema();
 
 
-        // Fechar
+        // ====================================
+        // FECHAR
+        // ====================================
 
         fecharModal();
 
@@ -763,7 +913,7 @@ formVeiculo.addEventListener(
 
 
 // ========================================
-// INICIAR
+// INICIAR SISTEMA
 // ========================================
 
 carregarFrota();
