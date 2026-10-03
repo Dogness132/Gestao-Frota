@@ -1,6 +1,6 @@
 // ============================================================
 // GESTÃO DE FROTA
-// Versão 9
+// Versão 10
 // ============================================================
 
 const CHAVE_FROTA_ADICIONAL = "frota_adicional";
@@ -86,19 +86,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function configurarNavegacao() {
 
-    const itens = document.querySelectorAll(".menu-item[data-pagina]");
+    const itens =
+        document.querySelectorAll(
+            ".menu-item[data-pagina]"
+        );
+
 
     itens.forEach(item => {
 
-        item.addEventListener("click", event => {
+        item.addEventListener(
+            "click",
+            event => {
 
-            event.preventDefault();
+                event.preventDefault();
 
-            const pagina = item.dataset.pagina;
+                const pagina =
+                    item.dataset.pagina;
 
-            abrirPagina(pagina);
+                abrirPagina(pagina);
 
-        });
+            }
+        );
 
     });
 
@@ -107,35 +115,56 @@ function configurarNavegacao() {
 
 function abrirPagina(nome) {
 
-    const paginas = document.querySelectorAll(".pagina");
+    const paginas =
+        document.querySelectorAll(
+            ".pagina"
+        );
+
 
     paginas.forEach(pagina => {
 
-        pagina.classList.add("oculto");
+        pagina.classList.add(
+            "oculto"
+        );
 
     });
 
 
-    const paginaSelecionada = document.getElementById(
-        `pagina${capitalizar(nome)}`
-    );
+    const paginaSelecionada =
+        document.getElementById(
+            `pagina${capitalizar(nome)}`
+        );
+
 
     if (paginaSelecionada) {
 
-        paginaSelecionada.classList.remove("oculto");
+        paginaSelecionada.classList.remove(
+            "oculto"
+        );
 
     }
 
 
-    const itens = document.querySelectorAll(".menu-item[data-pagina]");
+    const itens =
+        document.querySelectorAll(
+            ".menu-item[data-pagina]"
+        );
+
 
     itens.forEach(item => {
 
-        item.classList.remove("active");
+        item.classList.remove(
+            "active"
+        );
 
-        if (item.dataset.pagina === nome) {
 
-            item.classList.add("active");
+        if (
+            item.dataset.pagina === nome
+        ) {
+
+            item.classList.add(
+                "active"
+            );
 
         }
 
@@ -150,7 +179,8 @@ function abrirPagina(nome) {
 
 function capitalizar(texto) {
 
-    return texto.charAt(0).toUpperCase() + texto.slice(1);
+    return texto.charAt(0).toUpperCase()
+        + texto.slice(1);
 
 }
 
@@ -163,12 +193,14 @@ async function carregarFrota() {
 
     try {
 
-        const resposta = await fetch(
-            `data/frota.json?v=${Date.now()}`,
-            {
-                cache: "no-store"
-            }
-        );
+        const resposta =
+            await fetch(
+                `data/frota.json?v=${Date.now()}`,
+                {
+                    cache: "no-store"
+                }
+            );
+
 
         if (!resposta.ok) {
 
@@ -178,33 +210,49 @@ async function carregarFrota() {
 
         }
 
-        const frotaBase = await resposta.json();
 
-        const alteracoes = JSON.parse(
-            localStorage.getItem(CHAVE_FROTA_ALTERACOES) || "{}"
-        );
-
-        const adicionais = JSON.parse(
-            localStorage.getItem(CHAVE_FROTA_ADICIONAL) || "[]"
-        );
+        const frotaBase =
+            await resposta.json();
 
 
-        frota = frotaBase.map(veiculo => {
+        const alteracoes =
+            JSON.parse(
+                localStorage.getItem(
+                    CHAVE_FROTA_ALTERACOES
+                ) || "{}"
+            );
 
-            const alteracao = alteracoes[veiculo.id];
 
-            if (alteracao) {
+        const adicionais =
+            JSON.parse(
+                localStorage.getItem(
+                    CHAVE_FROTA_ADICIONAL
+                ) || "[]"
+            );
 
-                return {
-                    ...veiculo,
-                    ...alteracao
-                };
 
-            }
+        frota =
+            frotaBase.map(veiculo => {
 
-            return veiculo;
+                const alteracao =
+                    alteracoes[
+                        veiculo.id
+                    ];
 
-        });
+
+                if (alteracao) {
+
+                    return {
+                        ...veiculo,
+                        ...alteracao
+                    };
+
+                }
+
+
+                return veiculo;
+
+            });
 
 
         frota = [
@@ -224,9 +272,12 @@ async function carregarFrota() {
             erro
         );
 
-        const tabela = document.getElementById(
-            "tabelaFrota"
-        );
+
+        const tabela =
+            document.getElementById(
+                "tabelaFrota"
+            );
+
 
         if (tabela) {
 
@@ -251,11 +302,14 @@ async function carregarFrota() {
 
 function renderizarFrota() {
 
-    const tabela = document.getElementById(
-        "tabelaFrota"
-    );
+    const tabela =
+        document.getElementById(
+            "tabelaFrota"
+        );
+
 
     if (!tabela) return;
+
 
     tabela.innerHTML = "";
 
@@ -277,51 +331,72 @@ function renderizarFrota() {
 
     frota.forEach(veiculo => {
 
-        const linha = document.createElement("tr");
+        const linha =
+            document.createElement(
+                "tr"
+            );
 
 
         linha.innerHTML = `
 
             <td>
                 <strong>
-                    ${escapeHtml(veiculo.cv || "-")}
+                    ${escapeHtml(
+                        veiculo.cv || "-"
+                    )}
                 </strong>
             </td>
 
             <td>
-                ${escapeHtml(veiculo.sm1 || "-")}
-            </td>
-
-            <td>
-                ${escapeHtml(veiculo.sm2 || "-")}
-            </td>
-
-            <td>
-                ${escapeHtml(veiculo.area || "-")}
-            </td>
-
-            <td>
-                ${escapeHtml(veiculo.operacao || "-")}
-            </td>
-
-            <td>
-                ${escapeHtml(veiculo.suboperacao || "-")}
-            </td>
-
-            <td>
                 ${escapeHtml(
-                    nomeMotorista(veiculo.motoristaDia)
+                    veiculo.sm1 || "-"
                 )}
             </td>
 
             <td>
                 ${escapeHtml(
-                    nomeMotorista(veiculo.motoristaNoite)
+                    veiculo.sm2 || "-"
                 )}
             </td>
 
             <td>
-                ${badgeStatusVeiculo(veiculo.status)}
+                ${escapeHtml(
+                    veiculo.area || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    veiculo.operacao || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    veiculo.suboperacao || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    nomeMotorista(
+                        veiculo.motoristaDia
+                    )
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    nomeMotorista(
+                        veiculo.motoristaNoite
+                    )
+                )}
+            </td>
+
+            <td>
+                ${badgeStatusVeiculo(
+                    veiculo.status
+                )}
             </td>
 
             <td>
@@ -362,9 +437,12 @@ function nomeMotorista(id) {
     }
 
 
-    const motorista = motoristas.find(
-        item => String(item.id) === String(id)
-    );
+    const motorista =
+        motoristas.find(
+            item =>
+                String(item.id) ===
+                String(id)
+        );
 
 
     if (!motorista) {
@@ -387,18 +465,23 @@ function badgeStatusVeiculo(status) {
 
     const classe = {
 
-        "Rodando": "status-rodando",
+        "Rodando":
+            "status-rodando",
 
-        "Parado": "status-parado",
+        "Parado":
+            "status-parado",
 
-        "Reserva": "status-reserva"
+        "Reserva":
+            "status-reserva"
 
     }[status] || "";
 
 
     return `
         <span class="status-badge ${classe}">
-            ${escapeHtml(status || "-")}
+            ${escapeHtml(
+                status || "-"
+            )}
         </span>
     `;
 
@@ -411,39 +494,81 @@ function badgeStatusVeiculo(status) {
 
 function atualizarDashboard() {
 
-    const total = frota.length;
-
-    const rodando = frota.filter(
-        v => v.status === "Rodando"
-    ).length;
-
-    const parado = frota.filter(
-        v => v.status === "Parado"
-    ).length;
-
-    const reserva = frota.filter(
-        v => v.status === "Reserva"
-    ).length;
+    const total =
+        frota.length;
 
 
-    setTexto("frotaTotal", total);
+    const rodando =
+        frota.filter(
+            v =>
+                v.status ===
+                "Rodando"
+        ).length;
 
-    setTexto("frotaOperando", rodando);
 
-    setTexto("frotaParada", parado);
+    const parado =
+        frota.filter(
+            v =>
+                v.status ===
+                "Parado"
+        ).length;
 
-    setTexto("frotaReserva", reserva);
 
-    setTexto("legendOperando", rodando);
+    const reserva =
+        frota.filter(
+            v =>
+                v.status ===
+                "Reserva"
+        ).length;
 
-    setTexto("legendParados", parado);
 
-    setTexto("legendReserva", reserva);
+    setTexto(
+        "frotaTotal",
+        total
+    );
+
+
+    setTexto(
+        "frotaOperando",
+        rodando
+    );
+
+
+    setTexto(
+        "frotaParada",
+        parado
+    );
+
+
+    setTexto(
+        "frotaReserva",
+        reserva
+    );
+
+
+    setTexto(
+        "legendOperando",
+        rodando
+    );
+
+
+    setTexto(
+        "legendParados",
+        parado
+    );
+
+
+    setTexto(
+        "legendReserva",
+        reserva
+    );
 
 
     const percentual =
         total > 0
-            ? Math.round((rodando / total) * 100)
+            ? Math.round(
+                (rodando / total) * 100
+            )
             : 0;
 
 
@@ -453,7 +578,11 @@ function atualizarDashboard() {
     );
 
 
-    const donut = document.querySelector(".donut");
+    const donut =
+        document.querySelector(
+            ".donut"
+        );
+
 
     if (donut) {
 
@@ -462,36 +591,55 @@ function atualizarDashboard() {
                 ? (rodando / total) * 360
                 : 0;
 
+
         const grausParado =
             total > 0
                 ? (parado / total) * 360
                 : 0;
 
+
         const inicioParado =
             grausRodando;
 
+
         const fimParado =
-            grausRodando + grausParado;
+            grausRodando +
+            grausParado;
 
 
         donut.style.background = `
             conic-gradient(
-                var(--green) 0deg ${grausRodando}deg,
-                var(--red) ${inicioParado}deg ${fimParado}deg,
-                var(--yellow) ${fimParado}deg 360deg
+                var(--green)
+                0deg
+                ${grausRodando}deg,
+
+                var(--red)
+                ${inicioParado}deg
+                ${fimParado}deg,
+
+                var(--yellow)
+                ${fimParado}deg
+                360deg
             )
         `;
 
     }
 
 
-    const raizen = frota.filter(
-        v => v.operacao === "Raízen"
-    ).length;
+    const raizen =
+        frota.filter(
+            v =>
+                v.operacao ===
+                "Raízen"
+        ).length;
 
-    const nexta = frota.filter(
-        v => v.operacao === "Nexta"
-    ).length;
+
+    const nexta =
+        frota.filter(
+            v =>
+                v.operacao ===
+                "Nexta"
+        ).length;
 
 
     setTexto(
@@ -499,15 +647,18 @@ function atualizarDashboard() {
         raizen
     );
 
+
     setTexto(
         "distribuicaoNextaNumero",
         nexta
     );
 
+
     setTexto(
         "distribuicaoRaizenTexto",
         `${raizen} veículos`
     );
+
 
     setTexto(
         "distribuicaoNextaTexto",
@@ -520,6 +671,7 @@ function atualizarDashboard() {
             ? (raizen / total) * 100
             : 0;
 
+
     const percentualNexta =
         total > 0
             ? (nexta / total) * 100
@@ -530,6 +682,7 @@ function atualizarDashboard() {
         document.getElementById(
             "barraRaizen"
         );
+
 
     const barraNexta =
         document.getElementById(
@@ -556,7 +709,7 @@ function atualizarDashboard() {
 
 
 // ============================================================
-// MODAL VEÍCULO
+// MODAIS
 // ============================================================
 
 function configurarModais() {
@@ -566,15 +719,18 @@ function configurarModais() {
             "btnNovoVeiculo"
         );
 
+
     const btnFechar =
         document.getElementById(
             "btnFecharModal"
         );
 
+
     const btnCancelar =
         document.getElementById(
             "btnCancelarVeiculo"
         );
+
 
     const modal =
         document.getElementById(
@@ -653,15 +809,18 @@ function configurarModais() {
             "btnNovoMotorista"
         );
 
+
     const btnFecharMotorista =
         document.getElementById(
             "btnFecharModalMotorista"
         );
 
+
     const btnCancelarMotorista =
         document.getElementById(
             "btnCancelarMotorista"
         );
+
 
     const modalMotorista =
         document.getElementById(
@@ -706,7 +865,8 @@ function configurarModais() {
             event => {
 
                 if (
-                    event.target === modalMotorista
+                    event.target ===
+                    modalMotorista
                 ) {
 
                     fecharModalMotorista();
@@ -745,9 +905,11 @@ function abrirNovoVeiculo() {
 
     limparFormularioVeiculo();
 
+
     document.getElementById(
         "tituloModalVeiculo"
-    ).textContent = "Novo veículo";
+    ).textContent =
+        "Novo veículo";
 
 
     preencherMotoristasVeiculo();
@@ -755,7 +917,9 @@ function abrirNovoVeiculo() {
 
     document.getElementById(
         "modalVeiculo"
-    ).classList.add("show");
+    ).classList.add(
+        "show"
+    );
 
 }
 
@@ -766,14 +930,19 @@ function abrirNovoVeiculo() {
 
 function editarVeiculo(id) {
 
-    const veiculo = frota.find(
-        item => String(item.id) === String(id)
-    );
+    const veiculo =
+        frota.find(
+            item =>
+                String(item.id) ===
+                String(id)
+        );
 
 
     if (!veiculo) {
 
-        alert("Veículo não encontrado.");
+        alert(
+            "Veículo não encontrado."
+        );
 
         return;
 
@@ -782,37 +951,45 @@ function editarVeiculo(id) {
 
     document.getElementById(
         "tituloModalVeiculo"
-    ).textContent = "Editar veículo";
+    ).textContent =
+        "Editar veículo";
 
 
     document.getElementById(
         "veiculoId"
-    ).value = veiculo.id;
+    ).value =
+        veiculo.id;
 
 
     document.getElementById(
         "cv"
-    ).value = veiculo.cv || "";
+    ).value =
+        veiculo.cv || "";
 
 
     document.getElementById(
         "sm1"
-    ).value = veiculo.sm1 || "";
+    ).value =
+        veiculo.sm1 || "";
 
 
     document.getElementById(
         "sm2"
-    ).value = veiculo.sm2 || "";
+    ).value =
+        veiculo.sm2 || "";
 
 
     document.getElementById(
         "status"
-    ).value = veiculo.status || "Rodando";
+    ).value =
+        veiculo.status ||
+        "Rodando";
 
 
     document.getElementById(
         "area"
-    ).value = veiculo.area || "";
+    ).value =
+        veiculo.area || "";
 
 
     atualizarOperacoesVeiculo(
@@ -833,7 +1010,9 @@ function editarVeiculo(id) {
 
     document.getElementById(
         "modalVeiculo"
-    ).classList.add("show");
+    ).classList.add(
+        "show"
+    );
 
 }
 
@@ -905,7 +1084,9 @@ function salvarVeiculo(event) {
 
     if (!dados.cv) {
 
-        alert("Informe o CV.");
+        alert(
+            "Informe o CV."
+        );
 
         return;
 
@@ -914,11 +1095,12 @@ function salvarVeiculo(event) {
 
     if (!idAtual) {
 
-        const adicionais = JSON.parse(
-            localStorage.getItem(
-                CHAVE_FROTA_ADICIONAL
-            ) || "[]"
-        );
+        const adicionais =
+            JSON.parse(
+                localStorage.getItem(
+                    CHAVE_FROTA_ADICIONAL
+                ) || "[]"
+            );
 
 
         const novo = {
@@ -931,29 +1113,37 @@ function salvarVeiculo(event) {
         };
 
 
-        adicionais.push(novo);
+        adicionais.push(
+            novo
+        );
 
 
         localStorage.setItem(
             CHAVE_FROTA_ADICIONAL,
-            JSON.stringify(adicionais)
+            JSON.stringify(
+                adicionais
+            )
         );
 
     } else {
 
-        const alteracoes = JSON.parse(
-            localStorage.getItem(
-                CHAVE_FROTA_ALTERACOES
-            ) || "{}"
-        );
+        const alteracoes =
+            JSON.parse(
+                localStorage.getItem(
+                    CHAVE_FROTA_ALTERACOES
+                ) || "{}"
+            );
 
 
-        alteracoes[idAtual] = dados;
+        alteracoes[idAtual] =
+            dados;
 
 
         localStorage.setItem(
             CHAVE_FROTA_ALTERACOES,
-            JSON.stringify(alteracoes)
+            JSON.stringify(
+                alteracoes
+            )
         );
 
     }
@@ -979,13 +1169,15 @@ function limparFormularioVeiculo() {
 
     document.getElementById(
         "veiculoId"
-    ).value = "";
+    ).value =
+        "";
 
 
     const operacao =
         document.getElementById(
             "operacao"
         );
+
 
     const suboperacao =
         document.getElementById(
@@ -1020,7 +1212,9 @@ function fecharModalVeiculo() {
 
     document.getElementById(
         "modalVeiculo"
-    ).classList.remove("show");
+    ).classList.remove(
+        "show"
+    );
 
 }
 
@@ -1107,13 +1301,16 @@ function atualizarOperacoesVeiculo(
             "area"
         );
 
+
     const operacao =
         document.getElementById(
             "operacao"
         );
 
 
-    if (!area || !operacao) return;
+    if (!area || !operacao) {
+        return;
+    }
 
 
     operacao.innerHTML = `
@@ -1129,7 +1326,9 @@ function atualizarOperacoesVeiculo(
 
     if (
         !areaSelecionada ||
-        !HIERARQUIA[areaSelecionada]
+        !HIERARQUIA[
+            areaSelecionada
+        ]
     ) {
 
         atualizarSuboperacoesVeiculo();
@@ -1140,34 +1339,43 @@ function atualizarOperacoesVeiculo(
 
 
     Object.keys(
-        HIERARQUIA[areaSelecionada]
-    ).forEach(nomeOperacao => {
+        HIERARQUIA[
+            areaSelecionada
+        ]
+    ).forEach(
+        nomeOperacao => {
 
-        const option =
-            document.createElement(
-                "option"
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                nomeOperacao;
+
+
+            option.textContent =
+                nomeOperacao;
+
+
+            if (
+                nomeOperacao ===
+                operacaoSelecionada
+            ) {
+
+                option.selected =
+                    true;
+
+            }
+
+
+            operacao.appendChild(
+                option
             );
 
-        option.value =
-            nomeOperacao;
-
-        option.textContent =
-            nomeOperacao;
-
-
-        if (
-            nomeOperacao ===
-            operacaoSelecionada
-        ) {
-
-            option.selected = true;
-
         }
-
-
-        operacao.appendChild(option);
-
-    });
+    );
 
 
     atualizarSuboperacoesVeiculo();
@@ -1184,10 +1392,12 @@ function atualizarSuboperacoesVeiculo(
             "area"
         );
 
+
     const operacao =
         document.getElementById(
             "operacao"
         );
+
 
     const suboperacao =
         document.getElementById(
@@ -1199,7 +1409,9 @@ function atualizarSuboperacoesVeiculo(
         !area ||
         !operacao ||
         !suboperacao
-    ) return;
+    ) {
+        return;
+    }
 
 
     suboperacao.innerHTML = `
@@ -1217,31 +1429,40 @@ function atualizarSuboperacoesVeiculo(
         ] || [];
 
 
-    lista.forEach(nome => {
+    lista.forEach(
+        nome => {
 
-        const option =
-            document.createElement(
-                "option"
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                nome;
+
+
+            option.textContent =
+                nome;
+
+
+            if (
+                nome ===
+                suboperacaoSelecionada
+            ) {
+
+                option.selected =
+                    true;
+
+            }
+
+
+            suboperacao.appendChild(
+                option
             );
 
-        option.value = nome;
-
-        option.textContent = nome;
-
-
-        if (
-            nome ===
-            suboperacaoSelecionada
-        ) {
-
-            option.selected = true;
-
         }
-
-
-        suboperacao.appendChild(option);
-
-    });
+    );
 
 }
 
@@ -1260,13 +1481,17 @@ function preencherMotoristasVeiculo(
             "motoristaDia"
         );
 
+
     const selectNoite =
         document.getElementById(
             "motoristaNoite"
         );
 
 
-    if (!selectDia || !selectNoite) {
+    if (
+        !selectDia ||
+        !selectNoite
+    ) {
         return;
     }
 
@@ -1289,71 +1514,109 @@ function preencherMotoristasVeiculo(
         )?.value || "";
 
 
+    // --------------------------------------------------------
+    // FILTRO BASE
+    // Área + Operação + Suboperação + Status
+    // --------------------------------------------------------
+
     const disponiveis =
-        motoristas.filter(motorista => {
+        motoristas.filter(
+            motorista => {
 
-            if (
-                motorista.status !==
-                "Ativo"
-            ) {
+                if (
+                    motorista.status !==
+                    "Ativo"
+                ) {
 
-                return false;
+                    return false;
+
+                }
+
+
+                if (
+                    area &&
+                    motorista.area !==
+                    area
+                ) {
+
+                    return false;
+
+                }
+
+
+                if (
+                    operacao &&
+                    motorista.operacao !==
+                    operacao
+                ) {
+
+                    return false;
+
+                }
+
+
+                if (
+                    suboperacao &&
+                    motorista.suboperacao !==
+                    suboperacao
+                ) {
+
+                    return false;
+
+                }
+
+
+                return true;
 
             }
+        );
 
 
-            if (
-                area &&
-                motorista.area !== area
-            ) {
+    // --------------------------------------------------------
+    // DIA
+    // Somente cronotipo/turno Dia
+    // --------------------------------------------------------
 
-                return false;
-
-            }
-
-
-            if (
-                operacao &&
-                motorista.operacao !==
-                operacao
-            ) {
-
-                return false;
-
-            }
+    const motoristasDia =
+        disponiveis.filter(
+            motorista =>
+                motorista.turno ===
+                "Dia"
+        );
 
 
-            if (
-                suboperacao &&
-                motorista.suboperacao !==
-                suboperacao
-            ) {
+    // --------------------------------------------------------
+    // NOITE
+    // Somente cronotipo/turno Noite
+    // --------------------------------------------------------
 
-                return false;
-
-            }
-
-
-            return true;
-
-        });
+    const motoristasNoite =
+        disponiveis.filter(
+            motorista =>
+                motorista.turno ===
+                "Noite"
+        );
 
 
     montarSelectMotoristas(
         selectDia,
-        disponiveis,
+        motoristasDia,
         motoristaDiaSelecionado
     );
 
 
     montarSelectMotoristas(
         selectNoite,
-        disponiveis,
+        motoristasNoite,
         motoristaNoiteSelecionado
     );
 
 }
 
+
+// ============================================================
+// MONTAR SELECT DE MOTORISTAS
+// ============================================================
 
 function montarSelectMotoristas(
     select,
@@ -1376,33 +1639,44 @@ function montarSelectMotoristas(
                     "pt-BR"
                 )
         )
-        .forEach(motorista => {
+        .forEach(
+            motorista => {
 
-            const option =
-                document.createElement(
-                    "option"
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    motorista.id;
+
+
+                option.textContent =
+                    `${motorista.nome} — ${motorista.turno}`;
+
+
+                if (
+                    String(
+                        motorista.id
+                    ) ===
+                    String(
+                        selecionado
+                    )
+                ) {
+
+                    option.selected =
+                        true;
+
+                }
+
+
+                select.appendChild(
+                    option
                 );
 
-            option.value =
-                motorista.id;
-
-            option.textContent =
-                `${motorista.nome} — ${motorista.turno}`;
-
-
-            if (
-                String(motorista.id) ===
-                String(selecionado)
-            ) {
-
-                option.selected = true;
-
             }
-
-
-            select.appendChild(option);
-
-        });
+        );
 
 }
 
@@ -1415,11 +1689,12 @@ function carregarMotoristas() {
 
     try {
 
-        motoristas = JSON.parse(
-            localStorage.getItem(
-                CHAVE_MOTORISTAS
-            ) || "[]"
-        );
+        motoristas =
+            JSON.parse(
+                localStorage.getItem(
+                    CHAVE_MOTORISTAS
+                ) || "[]"
+            );
 
     } catch (erro) {
 
@@ -1442,11 +1717,17 @@ function carregarMotoristas() {
 }
 
 
+// ============================================================
+// SALVAR LISTA MOTORISTAS
+// ============================================================
+
 function salvarListaMotoristas() {
 
     localStorage.setItem(
         CHAVE_MOTORISTAS,
-        JSON.stringify(motoristas)
+        JSON.stringify(
+            motoristas
+        )
     );
 
 }
@@ -1461,19 +1742,28 @@ function atualizarMotoristas() {
     const total =
         motoristas.length;
 
+
     const ativos =
         motoristas.filter(
-            m => m.status === "Ativo"
+            m =>
+                m.status ===
+                "Ativo"
         ).length;
+
 
     const fixos =
         motoristas.filter(
-            m => m.tipo === "Fixo"
+            m =>
+                m.tipo ===
+                "Fixo"
         ).length;
+
 
     const reservas =
         motoristas.filter(
-            m => m.tipo === "Reserva"
+            m =>
+                m.tipo ===
+                "Reserva"
         ).length;
 
 
@@ -1482,15 +1772,18 @@ function atualizarMotoristas() {
         total
     );
 
+
     setTexto(
         "motoristasAtivos",
         ativos
     );
 
+
     setTexto(
         "motoristasFixos",
         fixos
     );
+
 
     setTexto(
         "motoristasReservas",
@@ -1560,50 +1853,59 @@ function renderizarMotoristas() {
 
 
     const filtrados =
-        motoristas.filter(motorista => {
+        motoristas.filter(
+            motorista => {
 
-            const correspondeBusca =
-                !busca ||
-                motorista.nome
-                    .toLowerCase()
-                    .includes(busca);
-
-
-            const correspondeArea =
-                !area ||
-                motorista.area === area;
+                const correspondeBusca =
+                    !busca ||
+                    motorista.nome
+                        .toLowerCase()
+                        .includes(
+                            busca
+                        );
 
 
-            const correspondeOperacao =
-                !operacao ||
-                motorista.operacao === operacao;
+                const correspondeArea =
+                    !area ||
+                    motorista.area ===
+                    area;
 
 
-            const correspondeTipo =
-                !tipo ||
-                motorista.tipo === tipo;
+                const correspondeOperacao =
+                    !operacao ||
+                    motorista.operacao ===
+                    operacao;
 
 
-            const correspondeStatus =
-                !status ||
-                motorista.status === status;
+                const correspondeTipo =
+                    !tipo ||
+                    motorista.tipo ===
+                    tipo;
 
 
-            const correspondeTurno =
-                !turno ||
-                motorista.turno === turno;
+                const correspondeStatus =
+                    !status ||
+                    motorista.status ===
+                    status;
 
 
-            return (
-                correspondeBusca &&
-                correspondeArea &&
-                correspondeOperacao &&
-                correspondeTipo &&
-                correspondeStatus &&
-                correspondeTurno
-            );
+                const correspondeTurno =
+                    !turno ||
+                    motorista.turno ===
+                    turno;
 
-        });
+
+                return (
+                    correspondeBusca &&
+                    correspondeArea &&
+                    correspondeOperacao &&
+                    correspondeTipo &&
+                    correspondeStatus &&
+                    correspondeTurno
+                );
+
+            }
+        );
 
 
     if (!filtrados.length) {
@@ -1621,81 +1923,90 @@ function renderizarMotoristas() {
     }
 
 
-    filtrados.forEach(motorista => {
+    filtrados.forEach(
+        motorista => {
 
-        const linha =
-            document.createElement(
-                "tr"
+            const linha =
+                document.createElement(
+                    "tr"
+                );
+
+
+            linha.innerHTML = `
+
+                <td>
+                    <strong>
+                        ${escapeHtml(
+                            motorista.nome
+                        )}
+                    </strong>
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        motorista.area ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        motorista.operacao ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        motorista.suboperacao ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        motorista.tipo ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${escapeHtml(
+                        motorista.turno ||
+                        "-"
+                    )}
+                </td>
+
+                <td>
+                    ${badgeStatusMotorista(
+                        motorista.status
+                    )}
+                </td>
+
+                <td>
+
+                    <div class="action-buttons">
+
+                        <button
+                            class="action-button"
+                            onclick="editarMotorista('${escapeAttribute(motorista.id)}')"
+                        >
+                            Editar
+                        </button>
+
+                    </div>
+
+                </td>
+
+            `;
+
+
+            tabela.appendChild(
+                linha
             );
 
-
-        linha.innerHTML = `
-
-            <td>
-                <strong>
-                    ${escapeHtml(
-                        motorista.nome
-                    )}
-                </strong>
-            </td>
-
-            <td>
-                ${escapeHtml(
-                    motorista.area || "-"
-                )}
-            </td>
-
-            <td>
-                ${escapeHtml(
-                    motorista.operacao || "-"
-                )}
-            </td>
-
-            <td>
-                ${escapeHtml(
-                    motorista.suboperacao || "-"
-                )}
-            </td>
-
-            <td>
-                ${escapeHtml(
-                    motorista.tipo || "-"
-                )}
-            </td>
-
-            <td>
-                ${escapeHtml(
-                    motorista.turno || "-"
-                )}
-            </td>
-
-            <td>
-                ${badgeStatusMotorista(
-                    motorista.status
-                )}
-            </td>
-
-            <td>
-
-                <div class="action-buttons">
-
-                    <button
-                        class="action-button"
-                        onclick="editarMotorista('${escapeAttribute(motorista.id)}')"
-                    >
-                        Editar
-                    </button>
-
-                </div>
-
-            </td>
-
-        `;
-
-
-        tabela.appendChild(linha);
-
-    });
+        }
+    );
 
 }
 
@@ -1704,7 +2015,9 @@ function renderizarMotoristas() {
 // BADGE MOTORISTA
 // ============================================================
 
-function badgeStatusMotorista(status) {
+function badgeStatusMotorista(
+    status
+) {
 
     const classe = {
 
@@ -1717,12 +2030,16 @@ function badgeStatusMotorista(status) {
         "Afastado":
             "motorista-afastado"
 
-    }[status] || "";
+    }[
+        status
+    ] || "";
 
 
     return `
         <span class="motorista-status ${classe}">
-            ${escapeHtml(status || "-")}
+            ${escapeHtml(
+                status || "-"
+            )}
         </span>
     `;
 
@@ -1746,7 +2063,8 @@ function abrirNovoMotorista() {
 
     document.getElementById(
         "motoristaId"
-    ).value = "";
+    ).value =
+        "";
 
 
     document.getElementById(
@@ -1760,7 +2078,9 @@ function abrirNovoMotorista() {
 
     document.getElementById(
         "modalMotorista"
-    ).classList.add("show");
+    ).classList.add(
+        "show"
+    );
 
 }
 
@@ -1827,30 +2147,36 @@ function editarMotorista(id) {
     document.getElementById(
         "motoristaTipo"
     ).value =
-        motorista.tipo || "Fixo";
+        motorista.tipo ||
+        "Fixo";
 
 
     document.getElementById(
         "motoristaTurno"
     ).value =
-        motorista.turno || "Dia";
+        motorista.turno ||
+        "Dia";
 
 
     document.getElementById(
         "motoristaStatus"
     ).value =
-        motorista.status || "Ativo";
+        motorista.status ||
+        "Ativo";
 
 
     document.getElementById(
         "motoristaObservacao"
     ).value =
-        motorista.observacao || "";
+        motorista.observacao ||
+        "";
 
 
     document.getElementById(
         "modalMotorista"
-    ).classList.add("show");
+    ).classList.add(
+        "show"
+    );
 
 }
 
@@ -1859,7 +2185,9 @@ function editarMotorista(id) {
 // SALVAR MOTORISTA
 // ============================================================
 
-function salvarMotorista(event) {
+function salvarMotorista(
+    event
+) {
 
     event.preventDefault();
 
@@ -1964,7 +2292,9 @@ function salvarMotorista(event) {
         const indice =
             motoristas.findIndex(
                 motorista =>
-                    String(motorista.id) ===
+                    String(
+                        motorista.id
+                    ) ===
                     String(id)
             );
 
@@ -2016,7 +2346,9 @@ function fecharModalMotorista() {
 
     document.getElementById(
         "modalMotorista"
-    ).classList.remove("show");
+    ).classList.remove(
+        "show"
+    );
 
 }
 
@@ -2079,13 +2411,19 @@ function atualizarOperacoesMotorista(
             "motoristaArea"
         );
 
+
     const operacao =
         document.getElementById(
             "motoristaOperacao"
         );
 
 
-    if (!area || !operacao) return;
+    if (
+        !area ||
+        !operacao
+    ) {
+        return;
+    }
 
 
     operacao.innerHTML = `
@@ -2110,16 +2448,20 @@ function atualizarOperacoesMotorista(
     }
 
 
-    Object.keys(dados)
-        .forEach(nome => {
+    Object.keys(
+        dados
+    ).forEach(
+        nome => {
 
             const option =
                 document.createElement(
                     "option"
                 );
 
+
             option.value =
                 nome;
+
 
             option.textContent =
                 nome;
@@ -2140,7 +2482,8 @@ function atualizarOperacoesMotorista(
                 option
             );
 
-        });
+        }
+    );
 
 
     atualizarSuboperacoesMotorista();
@@ -2157,10 +2500,12 @@ function atualizarSuboperacoesMotorista(
             "motoristaArea"
         );
 
+
     const operacao =
         document.getElementById(
             "motoristaOperacao"
         );
+
 
     const suboperacao =
         document.getElementById(
@@ -2172,7 +2517,9 @@ function atualizarSuboperacoesMotorista(
         !area ||
         !operacao ||
         !suboperacao
-    ) return;
+    ) {
+        return;
+    }
 
 
     suboperacao.innerHTML = `
@@ -2190,36 +2537,40 @@ function atualizarSuboperacoesMotorista(
         ] || [];
 
 
-    lista.forEach(nome => {
+    lista.forEach(
+        nome => {
 
-        const option =
-            document.createElement(
-                "option"
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                nome;
+
+
+            option.textContent =
+                nome;
+
+
+            if (
+                nome ===
+                suboperacaoSelecionada
+            ) {
+
+                option.selected =
+                    true;
+
+            }
+
+
+            suboperacao.appendChild(
+                option
             );
 
-        option.value =
-            nome;
-
-        option.textContent =
-            nome;
-
-
-        if (
-            nome ===
-            suboperacaoSelecionada
-        ) {
-
-            option.selected =
-                true;
-
         }
-
-
-        suboperacao.appendChild(
-            option
-        );
-
-    });
+    );
 
 }
 
@@ -2230,6 +2581,7 @@ function limparHierarquiaMotorista() {
         document.getElementById(
             "motoristaOperacao"
         );
+
 
     const suboperacao =
         document.getElementById(
@@ -2284,27 +2636,33 @@ function configurarFiltrosMotoristas() {
     ];
 
 
-    ids.forEach(id => {
+    ids.forEach(
+        id => {
 
-        const elemento =
-            document.getElementById(id);
-
-
-        if (!elemento) return;
-
-
-        elemento.addEventListener(
-            "input",
-            renderizarMotoristas
-        );
+            const elemento =
+                document.getElementById(
+                    id
+                );
 
 
-        elemento.addEventListener(
-            "change",
-            renderizarMotoristas
-        );
+            if (!elemento) {
+                return;
+            }
 
-    });
+
+            elemento.addEventListener(
+                "input",
+                renderizarMotoristas
+            );
+
+
+            elemento.addEventListener(
+                "change",
+                renderizarMotoristas
+            );
+
+        }
+    );
 
 }
 
@@ -2341,7 +2699,9 @@ function preencherSelectUnico(
 ) {
 
     const select =
-        document.getElementById(id);
+        document.getElementById(
+            id
+        );
 
 
     if (!select) return;
@@ -2358,9 +2718,13 @@ function preencherSelectUnico(
 
 
     const valoresUnicos =
-        [...new Set(
-            valores.filter(Boolean)
-        )].sort(
+        [
+            ...new Set(
+                valores.filter(
+                    Boolean
+                )
+            )
+        ].sort(
             (a, b) =>
                 a.localeCompare(
                     b,
@@ -2369,7 +2733,8 @@ function preencherSelectUnico(
         );
 
 
-    select.innerHTML = "";
+    select.innerHTML =
+        "";
 
 
     const primeira =
@@ -2377,34 +2742,43 @@ function preencherSelectUnico(
             "option"
         );
 
-    primeira.value = "";
+
+    primeira.value =
+        "";
+
 
     primeira.textContent =
         primeiraOpcao;
+
 
     select.appendChild(
         primeira
     );
 
 
-    valoresUnicos.forEach(valor => {
+    valoresUnicos.forEach(
+        valor => {
 
-        const option =
-            document.createElement(
-                "option"
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                valor;
+
+
+            option.textContent =
+                valor;
+
+
+            select.appendChild(
+                option
             );
 
-        option.value =
-            valor;
-
-        option.textContent =
-            valor;
-
-        select.appendChild(
-            option
-        );
-
-    });
+        }
+    );
 
 
     if (
@@ -2425,10 +2799,15 @@ function preencherSelectUnico(
 // UTILITÁRIOS
 // ============================================================
 
-function setTexto(id, valor) {
+function setTexto(
+    id,
+    valor
+) {
 
     const elemento =
-        document.getElementById(id);
+        document.getElementById(
+            id
+        );
 
 
     if (elemento) {
@@ -2441,33 +2820,63 @@ function setTexto(id, valor) {
 }
 
 
-function escapeHtml(valor) {
+function escapeHtml(
+    valor
+) {
 
-    return String(valor ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return String(
+        valor ?? ""
+    )
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 
 }
 
 
-function escapeAttribute(valor) {
+function escapeAttribute(
+    valor
+) {
 
-    return String(valor ?? "")
-        .replaceAll("\\", "\\\\")
-        .replaceAll("'", "\\'");
+    return String(
+        valor ?? ""
+    )
+        .replaceAll(
+            "\\",
+            "\\\\"
+        )
+        .replaceAll(
+            "'",
+            "\\'"
+        );
 
 }
 
 
 // ============================================================
-// EXPOR FUNÇÕES PARA OS BOTÕES DA TABELA
+// EXPOR FUNÇÕES PARA OS BOTÕES
 // ============================================================
 
 window.editarVeiculo =
     editarVeiculo;
+
 
 window.editarMotorista =
     editarMotorista;
