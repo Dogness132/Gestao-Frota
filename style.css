@@ -1,916 +1,104 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: Inter, Arial, sans-serif;
-    background: #0b0f14;
-    color: #e8edf3;
-    min-height: 100vh;
-}
-
-
-/* =========================================
-   SIDEBAR
-========================================= */
-
-.sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-
-    width: 240px;
-    height: 100vh;
-
-    background: #11161d;
-    border-right: 1px solid #252c35;
-
-    padding: 24px 14px;
-
-    display: flex;
-    flex-direction: column;
-
-    z-index: 10;
-}
-
-.logo {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-
-    font-weight: 800;
-    font-size: 24px;
-
-    margin: 4px 10px 34px;
-}
-
-.logo span {
-    font-size: 13px;
-    line-height: 1.1;
-    letter-spacing: .5px;
-}
-
-.sidebar nav {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.sidebar-bottom {
-    margin-top: auto;
-}
-
-.menu-item {
-    color: #aeb8c5;
-    text-decoration: none;
-
-    padding: 13px 14px;
-
-    border-radius: 10px;
-
-    display: flex;
-    gap: 12px;
-    align-items: center;
-
-    font-size: 14px;
-
-    transition: .2s;
-}
-
-.menu-item:hover,
-.menu-item.active {
-    background: #1c2530;
-    color: #fff;
-}
-
-
-/* =========================================
-   MAIN
-========================================= */
-
-.main {
-    margin-left: 240px;
-
-    padding: 28px 32px;
-
-    min-height: 100vh;
-}
-
-
-/* =========================================
-   TOPBAR
-========================================= */
-
-.topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    margin-bottom: 26px;
-}
-
-.topbar h1 {
-    font-size: 28px;
-    margin-bottom: 4px;
-}
-
-.topbar p,
-.topbar small,
-.panel-header span,
-.card small {
-    color: #7f8b99;
-}
-
-.user {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.user strong,
-.user small {
-    display: block;
-}
-
-.avatar {
-    width: 38px;
-    height: 38px;
-
-    border-radius: 50%;
-
-    display: grid;
-    place-items: center;
-
-    background: #293442;
-
-    font-weight: 700;
-}
-
-
-/* =========================================
-   PÁGINAS
-========================================= */
-
-.page {
-    display: none;
-}
-
-.page.active-page {
-    display: block;
-}
-
-
-/* =========================================
-   CARDS
-========================================= */
-
-.cards {
-    display: grid;
-
-    grid-template-columns: repeat(4, 1fr);
-
-    gap: 16px;
-
-    margin-bottom: 18px;
-}
-
-.card,
-.panel {
-    background: #11171f;
-
-    border: 1px solid #222b35;
-
-    border-radius: 14px;
-}
-
-.card {
-    padding: 20px;
-}
-
-.card-title {
-    display: block;
-
-    color: #aab4c1;
-
-    font-size: 13px;
-
-    margin-bottom: 10px;
-}
-
-.card strong {
-    font-size: 30px;
-
-    display: block;
-
-    margin-bottom: 7px;
-}
-
-.card.green strong {
-    color: #62d69a;
-}
-
-.card.red strong {
-    color: #ff6b6b;
-}
-
-.card.yellow strong {
-    color: #e8c85c;
-}
-
-.card.blue strong {
-    color: #69aef7;
-}
-
-
-/* =========================================
-   PAINÉIS
-========================================= */
-
-.panel {
-    padding: 20px;
-
-    margin-bottom: 18px;
-}
-
-.panel-header {
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    margin-bottom: 18px;
-}
-
-.panel-header h2 {
-    font-size: 18px;
-
-    margin-bottom: 5px;
-}
-
-
-/* =========================================
-   DASHBOARD
-========================================= */
-
-.content-grid {
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 18px;
-
-    margin-bottom: 18px;
-}
-
-.status-container {
-    display: flex;
-
-    align-items: center;
-
-    gap: 36px;
-}
-
-
-/* DONUT */
-
-.donut {
-    width: 155px;
-    height: 155px;
-
-    border-radius: 50%;
-
-    display: grid;
-
-    place-items: center;
-
-    position: relative;
-
-    background:
-        conic-gradient(
-            #62d69a 0 75%,
-            #ff6b6b 75% 87.5%,
-            #e8c85c 87.5% 100%
-        );
-}
-
-.donut::after {
-    content: "";
-
-    position: absolute;
-
-    width: 112px;
-    height: 112px;
-
-    border-radius: 50%;
-
-    background: #11171f;
-}
-
-.donut-center {
-    position: relative;
-
-    z-index: 1;
-
-    text-align: center;
-}
-
-.donut-center strong {
-    display: block;
-
-    font-size: 24px;
-}
-
-.donut-center span {
-    font-size: 12px;
-
-    color: #8793a0;
-}
-
-
-/* LEGENDA */
-
-.legend {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 18px;
-
-    flex: 1;
-}
-
-.legend div {
-    display: flex;
-
-    align-items: center;
-
-    gap: 9px;
-
-    color: #aeb8c5;
-}
-
-.legend strong {
-    margin-left: auto;
-
-    color: #fff;
-}
-
-.dot {
-    width: 9px;
-    height: 9px;
-
-    border-radius: 50%;
-}
-
-.green-dot {
-    background: #62d69a;
-}
-
-.red-dot {
-    background: #ff6b6b;
-}
-
-.yellow-dot {
-    background: #e8c85c;
-}
-
-
-/* DISTRIBUIÇÃO */
-
-.distribution {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 9px;
-}
-
-.distribution-row {
-    display: flex;
-
-    justify-content: space-between;
-}
-
-.distribution-row div span {
-    display: block;
-
-    color: #7f8b99;
-
-    font-size: 12px;
-
-    margin-top: 3px;
-}
-
-.bar {
-    height: 8px;
-
-    background: #202832;
-
-    border-radius: 99px;
-
-    overflow: hidden;
-
-    margin-bottom: 10px;
-}
-
-.bar-fill {
-    height: 100%;
-
-    background: #879fb8;
-
-    border-radius: 99px;
-}
-
-
-/* =========================================
-   MINI STATS
-========================================= */
-
-.mini-stats {
-    display: grid;
-
-    grid-template-columns: repeat(3, 1fr);
-
-    gap: 12px;
-}
-
-.mini-stats div {
-    background: #0c1117;
-
-    border: 1px solid #232c36;
-
+/* =========================================================
+   FILTROS DO DASHBOARD
+========================================================= */
+
+.dashboard-filtros {
+    background: var(--panel, #151922);
+    border: 1px solid var(--border, #252b36);
+    border-radius: 16px;
     padding: 18px;
-
-    border-radius: 10px;
+    margin-bottom: 20px;
 }
 
-.mini-stats span {
-    display: block;
-
-    color: #8b97a5;
-
-    font-size: 12px;
-
-    margin-bottom: 7px;
-}
-
-.mini-stats strong {
-    font-size: 25px;
-}
-
-
-/* =========================================
-   BOTÕES
-========================================= */
-
-.primary-button,
-.secondary-button,
-.danger-button {
-    border: 0;
-
-    border-radius: 9px;
-
-    padding: 10px 14px;
-
-    font-weight: 700;
-
-    cursor: pointer;
-}
-
-.primary-button {
-    background: #e7edf4;
-
-    color: #0b0f14;
-}
-
-.primary-button:hover {
-    background: #ffffff;
-}
-
-.secondary-button {
-    background: #202a35;
-
-    color: #dce4ec;
-}
-
-.secondary-button:hover {
-    background: #2b3744;
-}
-
-.danger-button {
-    background: #54252b;
-
-    color: #ffb7bd;
-}
-
-
-/* =========================================
-   TABELAS
-========================================= */
-
-.table-container {
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-
-    border-collapse: collapse;
-
-    min-width: 850px;
-}
-
-th,
-td {
-    text-align: left;
-
-    padding: 13px 10px;
-
-    border-bottom: 1px solid #232b34;
-
-    font-size: 13px;
-}
-
-th {
-    color: #8793a0;
-
-    font-weight: 600;
-}
-
-td {
-    color: #d9e0e8;
-}
-
-tbody tr:hover {
-    background: #151c24;
-}
-
-
-/* =========================================
-   STATUS
-========================================= */
-
-.status-badge,
-.type-badge {
-    display: inline-block;
-
-    padding: 5px 8px;
-
-    border-radius: 99px;
-
-    font-size: 11px;
-
-    font-weight: 700;
-
-    background: #25303b;
-}
-
-.status-Rodando,
-.status-Ativo,
-.status-Concluída {
-    color: #6ee0a4;
-}
-
-.status-Parado,
-.status-Afastado,
-.status-Em-manutenção {
-    color: #ff8b8b;
-}
-
-.status-Reserva,
-.status-Agendada {
-    color: #f0d36a;
-}
-
-
-/* =========================================
-   AÇÕES
-========================================= */
-
-.action-button {
-    background: #202a35;
-
-    color: #dce4ec;
-
-    border: 0;
-
-    border-radius: 7px;
-
-    padding: 7px 9px;
-
-    cursor: pointer;
-
-    margin-right: 5px;
-}
-
-.action-button:hover {
-    background: #2b3744;
-}
-
-
-/* =========================================
-   FILTROS
-========================================= */
-
-.filters {
-    display: grid;
-
-    grid-template-columns: 2fr repeat(3, 1fr);
-
-    gap: 10px;
-
+.dashboard-filtro-titulo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     margin-bottom: 16px;
 }
 
-.filters input,
-.filters select,
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-
-    background: #0c1117;
-
-    border: 1px solid #2a3440;
-
-    color: #e8edf3;
-
-    border-radius: 8px;
-
-    padding: 11px 12px;
-
-    outline: none;
+.dashboard-filtro-titulo strong {
+    font-size: 15px;
 }
 
-.filters input:focus,
-.filters select:focus,
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: #6f8297;
-}
-
-
-/* =========================================
-   MODAIS
-========================================= */
-
-.modal-overlay {
-    position: fixed;
-
-    inset: 0;
-
-    background: rgba(0, 0, 0, .72);
-
-    display: none;
-
-    align-items: center;
-
-    justify-content: center;
-
-    padding: 20px;
-
-    z-index: 50;
-}
-
-.modal-overlay.show {
-    display: flex;
-}
-
-.modal {
-    width: min(760px, 100%);
-
-    max-height: 90vh;
-
-    overflow: auto;
-
-    background: #121922;
-
-    border: 1px solid #2b3541;
-
-    border-radius: 15px;
-
-    padding: 22px;
-}
-
-.modal-header {
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: flex-start;
-
-    margin-bottom: 22px;
-}
-
-.modal-header h2 {
-    margin-bottom: 5px;
-}
-
-.modal-header span {
-    color: #7f8b99;
-
-    font-size: 13px;
-}
-
-.close-button {
-    border: 0;
-
-    background: transparent;
-
-    color: #aeb8c5;
-
-    font-size: 28px;
-
-    cursor: pointer;
-
-    line-height: 1;
-}
-
-.close-button:hover {
-    color: #fff;
-}
-
-
-/* =========================================
-   FORMULÁRIOS
-========================================= */
-
-.form-grid {
-    display: grid;
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 15px;
-}
-
-.form-group label {
-    display: block;
-
+.dashboard-filtro-titulo span {
+    color: var(--muted, #8f98a8);
     font-size: 12px;
-
-    color: #9aa6b3;
-
-    margin-bottom: 7px;
 }
 
-.form-group.full {
-    grid-column: 1 / -1;
+.dashboard-filtro-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
+    gap: 14px;
+    align-items: end;
 }
 
-.form-group textarea {
-    resize: vertical;
-
-    min-height: 90px;
-}
-
-.form-actions {
+.dashboard-filtro-acoes {
     display: flex;
-
     justify-content: flex-end;
+}
 
-    gap: 10px;
+.dashboard-filtros .form-group {
+    margin: 0;
+}
 
-    margin-top: 22px;
+.dashboard-filtros select:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.secondary-button {
+    min-height: 42px;
+    border: 1px solid var(--border, #303744);
+    background: transparent;
+    color: #dce2eb;
+    border-radius: 10px;
+    padding: 0 15px;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.secondary-button:hover {
+    background: rgba(255,255,255,.05);
+    border-color: #596273;
 }
 
 
-/* =========================================
-   MÓDULOS VAZIOS
-========================================= */
+/* =========================================================
+   DASHBOARD
+========================================================= */
 
-.empty-module {
-    text-align: center;
-
-    padding: 80px 20px;
+.donut-center strong {
+    font-size: 30px;
 }
 
-.empty-icon {
-    font-size: 48px;
-
-    margin-bottom: 14px;
-}
-
-.empty-module h2 {
-    margin-bottom: 8px;
-}
-
-.empty-module p {
-    color: #7f8b99;
+.donut-center span {
+    color: var(--muted, #8f98a8);
+    font-size: 12px;
 }
 
 
-/* =========================================
-   MOTORISTAS
-========================================= */
-
-.motorista-cards {
-    margin-bottom: 18px;
-}
-
-
-/* =========================================
+/* =========================================================
    RESPONSIVO
-========================================= */
+========================================================= */
 
 @media (max-width: 1100px) {
 
-    .cards {
+    .dashboard-filtro-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .filters {
-        grid-template-columns: 1fr 1fr;
+    .dashboard-filtro-acoes {
+        justify-content: flex-start;
     }
 
 }
 
 
-@media (max-width: 800px) {
+@media (max-width: 700px) {
 
-    .sidebar {
-        width: 70px;
-
-        padding: 18px 8px;
-    }
-
-    .logo span,
-    .menu-item span {
-        display: none;
-    }
-
-    .logo {
-        justify-content: center;
-
-        margin: 5px 0 30px;
-    }
-
-    .menu-item {
-        justify-content: center;
-    }
-
-    .main {
-        margin-left: 70px;
-
-        padding: 20px;
-    }
-
-    .topbar {
-        align-items: flex-start;
-    }
-
-    .form-grid {
+    .dashboard-filtro-grid {
         grid-template-columns: 1fr;
-    }
-
-    .form-group.full {
-        grid-column: auto;
-    }
-
-    .mini-stats {
-        grid-template-columns: 1fr;
-    }
-
-    .filters {
-        grid-template-columns: 1fr;
-    }
-
-    .status-container {
-        flex-direction: column;
-
-        align-items: flex-start;
-    }
-
-    .cards {
-        grid-template-columns: 1fr 1fr;
-    }
-
-}
-
-
-@media (max-width: 500px) {
-
-    .cards {
-        grid-template-columns: 1fr;
-    }
-
-    .main {
-        padding: 14px;
-    }
-
-    .topbar h1 {
-        font-size: 22px;
-    }
-
-    .user {
-        display: none;
     }
 
 }
