@@ -1,414 +1,485 @@
 /* ========================================= */
-/* GESTÃO DE FROTA */
+/* RESET */
 /* ========================================= */
 
-
-/* ========================================= */
-/* CONFIGURAÇÕES */
-/* ========================================= */
-
-const URL_FROTA =
-    "data/frota.json";
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 
-const CHAVE_ADICIONAIS =
-    "frota_adicional";
+body {
+    font-family: Arial, Helvetica, sans-serif;
 
+    background: #0f1117;
 
-/* ========================================= */
-/* VARIÁVEIS */
-/* ========================================= */
+    color: #f1f5f9;
 
-let frota = [];
-
-let frotaBase = [];
-
-let frotaAdicional = [];
-
-
-/* ========================================= */
-/* ELEMENTOS DO DOM */
-/* ========================================= */
-
-const modal =
-    document.getElementById("modalVeiculo");
-
-
-const btnNovoVeiculo =
-    document.getElementById("btnNovoVeiculo");
-
-
-const btnFecharModal =
-    document.getElementById("btnFecharModal");
-
-
-const btnCancelar =
-    document.getElementById("btnCancelar");
-
-
-const formVeiculo =
-    document.getElementById("formVeiculo");
-
-
-const tabelaFrota =
-    document.getElementById("tabelaFrota");
-
-
-const selectArea =
-    document.getElementById("area");
-
-
-const selectOperacao =
-    document.getElementById("operacao");
-
-
-const selectSuboperacao =
-    document.getElementById("suboperacao");
-
-
-/* ========================================= */
-/* FUNÇÃO PARA GERAR ID */
-/* ========================================= */
-
-function gerarId() {
-
-    return Date.now().toString()
-        + Math.random()
-            .toString(36)
-            .substring(2, 8);
-
+    min-height: 100vh;
 }
 
 
 /* ========================================= */
-/* CARREGAR DADOS */
+/* SIDEBAR */
 /* ========================================= */
 
-async function carregarFrota() {
+.sidebar {
+    position: fixed;
 
-    try {
+    left: 0;
+    top: 0;
 
-        console.log("Carregando frota...");
+    width: 240px;
+    height: 100vh;
 
+    background: #151922;
 
-        /*
-         * O timestamp impede o navegador
-         * de usar uma versão antiga do JSON.
-         */
+    border-right: 1px solid #252b36;
 
-        const resposta =
-            await fetch(
-                URL_FROTA + "?v=" + Date.now(),
-                {
-                    cache: "no-store"
-                }
-            );
+    padding: 25px 15px;
 
+    display: flex;
 
-        if (!resposta.ok) {
+    flex-direction: column;
 
-            throw new Error(
-                "Não foi possível carregar frota.json"
-            );
-
-        }
+    z-index: 100;
+}
 
 
-        frotaBase =
-            await resposta.json();
+.logo {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    font-size: 28px;
+
+    font-weight: bold;
+
+    padding: 10px 12px 35px;
+}
 
 
-        if (!Array.isArray(frotaBase)) {
+.logo span {
+    font-size: 14px;
 
-            throw new Error(
-                "frota.json não contém uma lista válida."
-            );
-
-        }
+    line-height: 1.1;
+}
 
 
-        /*
-         * Carrega somente os veículos
-         * adicionados pelo sistema.
-         *
-         * Não usamos mais a antiga chave
-         * "frota", que estava travando
-         * as alterações feitas no JSON.
-         */
+.sidebar nav {
+    display: flex;
 
-        const dadosAdicionais =
-            localStorage.getItem(
-                CHAVE_ADICIONAIS
-            );
+    flex-direction: column;
+
+    gap: 7px;
+}
 
 
-        if (dadosAdicionais) {
+.menu-item {
+    display: flex;
 
-            try {
+    align-items: center;
 
-                frotaAdicional =
-                    JSON.parse(
-                        dadosAdicionais
-                    );
+    gap: 12px;
 
-                if (!Array.isArray(frotaAdicional)) {
+    padding: 13px 15px;
 
-                    frotaAdicional = [];
+    color: #9ca3af;
 
-                }
+    text-decoration: none;
 
-            } catch (erro) {
+    border-radius: 10px;
 
-                console.warn(
-                    "Dados adicionais inválidos. Limpando..."
-                );
-
-                frotaAdicional = [];
-
-            }
-
-        } else {
-
-            frotaAdicional = [];
-
-        }
+    transition: 0.2s;
+}
 
 
-        /*
-         * A frota final é:
-         *
-         * JSON oficial
-         * +
-         * veículos criados pelo formulário
-         */
+.menu-item:hover {
+    background: #202631;
 
-        frota = [
-            ...frotaBase,
-            ...frotaAdicional
-        ];
+    color: #ffffff;
+}
 
 
-        console.log(
-            "Frota carregada:",
-            frota
-        );
+.menu-item.active {
+    background: #263142;
+
+    color: #ffffff;
+}
 
 
-        atualizarSistema();
-
-
-    } catch (erro) {
-
-        console.error(
-            "Erro ao carregar frota:",
-            erro
-        );
-
-
-        tabelaFrota.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    Erro ao carregar a frota.
-                    Verifique o arquivo
-                    data/frota.json.
-                </td>
-            </tr>
-        `;
-
-    }
-
+.sidebar-bottom {
+    margin-top: auto;
 }
 
 
 /* ========================================= */
-/* SALVAR VEÍCULOS ADICIONAIS */
+/* MAIN */
 /* ========================================= */
 
-function salvarAdicionais() {
+.main {
+    margin-left: 240px;
 
-    localStorage.setItem(
-        CHAVE_ADICIONAIS,
-        JSON.stringify(frotaAdicional)
-    );
+    min-height: 100vh;
 
+    padding: 30px 35px;
 }
 
 
 /* ========================================= */
-/* ATUALIZAR SISTEMA */
+/* TOPBAR */
 /* ========================================= */
 
-function atualizarSistema() {
+.topbar {
+    display: flex;
 
-    atualizarIndicadores();
+    align-items: center;
 
-    atualizarGrafico();
+    justify-content: space-between;
 
-    atualizarDistribuicao();
+    margin-bottom: 30px;
+}
 
-    atualizarTabela();
 
+.topbar h1 {
+    font-size: 30px;
+
+    margin-bottom: 5px;
+}
+
+
+.topbar p {
+    color: #8d96a5;
+}
+
+
+.user {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.user strong {
+    display: block;
+}
+
+
+.user small {
+    display: block;
+
+    color: #8d96a5;
+
+    margin-top: 3px;
+}
+
+
+.avatar {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 50%;
+
+    background: #273142;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-weight: bold;
 }
 
 
 /* ========================================= */
-/* INDICADORES */
+/* PÁGINAS */
 /* ========================================= */
 
-function atualizarIndicadores() {
-
-    const total =
-        frota.length;
-
-
-    const operando =
-        frota.filter(
-            veiculo =>
-                veiculo.status === "Rodando"
-        ).length;
+.page {
+    width: 100%;
+}
 
 
-    const parados =
-        frota.filter(
-            veiculo =>
-                veiculo.status === "Parado"
-        ).length;
+.hidden {
+    display: none !important;
+}
 
 
-    const reserva =
-        frota.filter(
-            veiculo =>
-                veiculo.status === "Reserva"
-        ).length;
+.page-heading {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+}
 
 
-    document.getElementById(
-        "frotaTotal"
-    ).textContent = total;
+.page-heading h2 {
+    font-size: 25px;
+
+    margin-bottom: 5px;
+}
 
 
-    document.getElementById(
-        "frotaOperando"
-    ).textContent = operando;
-
-
-    document.getElementById(
-        "frotaParada"
-    ).textContent = parados;
-
-
-    document.getElementById(
-        "frotaReserva"
-    ).textContent = reserva;
-
-
-    document.getElementById(
-        "legendOperando"
-    ).textContent = operando;
-
-
-    document.getElementById(
-        "legendParados"
-    ).textContent = parados;
-
-
-    document.getElementById(
-        "legendReserva"
-    ).textContent = reserva;
-
+.page-heading p {
+    color: #8d96a5;
 }
 
 
 /* ========================================= */
-/* GRÁFICO DONUT */
+/* CARDS */
 /* ========================================= */
 
-function atualizarGrafico() {
+.cards {
+    display: grid;
 
-    const total =
-        frota.length;
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
 
+    gap: 18px;
 
-    const operando =
-        frota.filter(
-            veiculo =>
-                veiculo.status === "Rodando"
-        ).length;
-
-
-    const parados =
-        frota.filter(
-            veiculo =>
-                veiculo.status === "Parado"
-        ).length;
+    margin-bottom: 20px;
+}
 
 
-    const reserva =
-        frota.filter(
-            veiculo =>
-                veiculo.status === "Reserva"
-        ).length;
+.card {
+    background: #171c25;
+
+    border: 1px solid #252c38;
+
+    border-radius: 14px;
+
+    padding: 22px;
+
+    min-height: 135px;
+
+    display: flex;
+
+    flex-direction: column;
+}
 
 
-    const donut =
-        document.getElementById("donut");
+.card-title {
+    color: #9aa3b2;
+
+    font-size: 14px;
+
+    margin-bottom: 10px;
+}
 
 
-    const percentual =
-        total > 0
-            ? Math.round(
-                (operando / total) * 100
-            )
-            : 0;
+.card strong {
+    font-size: 32px;
+
+    margin-bottom: 7px;
+}
 
 
-    document.getElementById(
-        "percentualOperacao"
-    ).textContent =
-        percentual + "%";
+.card small {
+    color: #7f8998;
+}
 
 
-    if (total === 0) {
-
-        donut.style.background =
-            "#303846";
-
-        return;
-
-    }
+.card.green strong {
+    color: #4ade80;
+}
 
 
-    const grausOperando =
-        (operando / total) * 360;
+.card.red strong {
+    color: #f87171;
+}
 
 
-    const grausParado =
-        (parados / total) * 360;
+.card.yellow strong {
+    color: #facc15;
+}
 
 
-    const inicioParado =
-        grausOperando;
+/* ========================================= */
+/* PAINÉIS */
+/* ========================================= */
+
+.content-grid {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+}
 
 
-    const fimParado =
-        inicioParado + grausParado;
+.panel {
+    background: #171c25;
+
+    border: 1px solid #252c38;
+
+    border-radius: 14px;
+
+    padding: 22px;
+}
 
 
-    donut.style.background = `
-        conic-gradient(
-            #4ade80 0deg
-            ${grausOperando}deg,
+.panel-header {
+    display: flex;
 
-            #f87171
-            ${grausOperando}deg
-            ${fimParado}deg,
+    align-items: center;
 
-            #facc15
-            ${fimParado}deg
-            360deg
-        )
-    `;
+    justify-content: space-between;
 
+    gap: 15px;
+
+    margin-bottom: 25px;
+}
+
+
+.panel-header h2 {
+    font-size: 18px;
+}
+
+
+.panel-header span {
+    color: #7f8998;
+
+    font-size: 13px;
+}
+
+
+/* ========================================= */
+/* DONUT */
+/* ========================================= */
+
+.status-container {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-around;
+
+    gap: 30px;
+}
+
+
+.donut {
+    width: 170px;
+
+    height: 170px;
+
+    border-radius: 50%;
+
+    background: #303846;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: relative;
+}
+
+
+.donut::after {
+    content: "";
+
+    position: absolute;
+
+    width: 125px;
+
+    height: 125px;
+
+    border-radius: 50%;
+
+    background: #171c25;
+}
+
+
+.donut-center {
+    position: relative;
+
+    z-index: 2;
+
+    text-align: center;
+}
+
+
+.donut-center strong {
+    display: block;
+
+    font-size: 30px;
+}
+
+
+.donut-center span {
+    color: #8d96a5;
+
+    font-size: 12px;
+}
+
+
+.legend {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+}
+
+
+.legend > div {
+    display: grid;
+
+    grid-template-columns:
+        12px 1fr auto;
+
+    gap: 10px;
+
+    align-items: center;
+
+    color: #cbd5e1;
+
+    font-size: 14px;
+}
+
+
+.legend strong {
+    color: #ffffff;
+}
+
+
+.dot {
+    width: 10px;
+
+    height: 10px;
+
+    border-radius: 50%;
+}
+
+
+.green-dot {
+    background: #4ade80;
+}
+
+
+.red-dot {
+    background: #f87171;
+}
+
+
+.yellow-dot {
+    background: #facc15;
 }
 
 
@@ -416,149 +487,128 @@ function atualizarGrafico() {
 /* DISTRIBUIÇÃO */
 /* ========================================= */
 
-function atualizarDistribuicao() {
+.distribution {
+    display: flex;
 
-    const total =
-        frota.length;
+    flex-direction: column;
 
-
-    const raizen =
-        frota.filter(
-            veiculo =>
-                normalizar(
-                    veiculo.operacao
-                ) === "raizen"
-        ).length;
+    gap: 10px;
+}
 
 
-    const nexta =
-        frota.filter(
-            veiculo =>
-                normalizar(
-                    veiculo.operacao
-                ) === "nexta"
-        ).length;
+.distribution-row {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-top: 5px;
+}
 
 
-    document.getElementById(
-        "quantidadeRaizen"
-    ).textContent = raizen;
+.distribution-row div {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+}
 
 
-    document.getElementById(
-        "quantidadeNexta"
-    ).textContent = nexta;
+.distribution-row span {
+    color: #7f8998;
+
+    font-size: 12px;
+}
 
 
-    const percentualRaizen =
-        total > 0
-            ? (raizen / total) * 100
-            : 0;
+.bar {
+    height: 8px;
+
+    background: #252c38;
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    margin-bottom: 15px;
+}
 
 
-    const percentualNexta =
-        total > 0
-            ? (nexta / total) * 100
-            : 0;
+.bar-fill {
+    height: 100%;
 
+    width: 0%;
 
-    document.getElementById(
-        "barraRaizen"
-    ).style.width =
-        percentualRaizen + "%";
+    background: #4ade80;
 
+    border-radius: 20px;
 
-    document.getElementById(
-        "barraNexta"
-    ).style.width =
-        percentualNexta + "%";
-
+    transition: width 0.3s ease;
 }
 
 
 /* ========================================= */
-/* TABELA */
+/* TABELAS */
 /* ========================================= */
 
-function atualizarTabela() {
-
-    tabelaFrota.innerHTML = "";
-
-
-    if (frota.length === 0) {
-
-        tabelaFrota.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    Nenhum veículo cadastrado.
-                </td>
-            </tr>
-        `;
-
-        return;
-
-    }
+.fleet-panel {
+    margin-bottom: 30px;
+}
 
 
-    frota.forEach(
-        veiculo => {
+.table-container {
+    width: 100%;
 
-            const linha =
-                document.createElement("tr");
-
-
-            const classeStatus =
-                obterClasseStatus(
-                    veiculo.status
-                );
+    overflow-x: auto;
+}
 
 
-            linha.innerHTML = `
+table {
+    width: 100%;
 
-                <td>
-                    ${valorSeguro(veiculo.cv)}
-                </td>
-
-                <td>
-                    ${valorSeguro(veiculo.sm1)}
-                </td>
-
-                <td>
-                    ${valorSeguro(veiculo.sm2)}
-                </td>
-
-                <td>
-                    ${valorSeguro(veiculo.area)}
-                </td>
-
-                <td>
-                    ${valorSeguro(veiculo.operacao)}
-                </td>
-
-                <td>
-                    ${valorSeguro(veiculo.suboperacao)}
-                </td>
-
-                <td>
-
-                    <span
-                        class="status-badge ${classeStatus}"
-                    >
-                        ${valorSeguro(veiculo.status)}
-                    </span>
-
-                </td>
-
-            `;
+    border-collapse: collapse;
+}
 
 
-            tabelaFrota.appendChild(
-                linha
-            );
+thead {
+    background: #1c222d;
+}
 
-        }
-    );
 
+th {
+    text-align: left;
+
+    color: #8d96a5;
+
+    font-size: 12px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.5px;
+
+    padding: 14px;
+
+    white-space: nowrap;
+}
+
+
+td {
+    padding: 15px 14px;
+
+    border-top: 1px solid #252c38;
+
+    color: #dbe3ed;
+
+    font-size: 14px;
+
+    white-space: nowrap;
+}
+
+
+tbody tr:hover {
+    background: #1c222d;
 }
 
 
@@ -566,523 +616,469 @@ function atualizarTabela() {
 /* STATUS */
 /* ========================================= */
 
-function obterClasseStatus(status) {
+.status-badge {
+    display: inline-flex;
 
-    switch (status) {
+    align-items: center;
 
-        case "Rodando":
-            return "status-rodando";
+    padding: 6px 10px;
 
-        case "Parado":
-            return "status-parado";
+    border-radius: 20px;
 
-        case "Reserva":
-            return "status-reserva";
+    font-size: 12px;
 
-        default:
-            return "";
+    font-weight: bold;
+}
 
+
+.status-rodando {
+    background: rgba(74, 222, 128, 0.12);
+
+    color: #4ade80;
+}
+
+
+.status-parado {
+    background: rgba(248, 113, 113, 0.12);
+
+    color: #f87171;
+}
+
+
+.status-reserva {
+    background: rgba(250, 204, 21, 0.12);
+
+    color: #facc15;
+}
+
+
+/* ========================================= */
+/* AÇÕES DA TABELA */
+/* ========================================= */
+
+.table-actions {
+    display: flex;
+
+    gap: 7px;
+}
+
+
+.action-button {
+    border: 1px solid #303846;
+
+    background: #202631;
+
+    color: #dbe3ed;
+
+    padding: 7px 10px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    font-size: 12px;
+}
+
+
+.action-button:hover {
+    background: #29313e;
+}
+
+
+.action-button.edit {
+    color: #4ade80;
+}
+
+
+/* ========================================= */
+/* FILTROS */
+/* ========================================= */
+
+.filtros-panel {
+    margin-bottom: 20px;
+}
+
+
+.filtros-grid {
+    display: grid;
+
+    grid-template-columns:
+        2fr 1fr 1fr 1fr;
+
+    gap: 15px;
+}
+
+
+/* ========================================= */
+/* FORMULÁRIOS */
+/* ========================================= */
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+
+.form-group label {
+    color: #cbd5e1;
+
+    font-size: 13px;
+
+    font-weight: bold;
+}
+
+
+.form-group input,
+.form-group select {
+    width: 100%;
+
+    padding: 12px 13px;
+
+    border-radius: 8px;
+
+    border: 1px solid #303846;
+
+    background: #10151d;
+
+    color: #f1f5f9;
+
+    outline: none;
+}
+
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #4ade80;
+}
+
+
+.form-group select:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+/* ========================================= */
+/* BOTÕES */
+/* ========================================= */
+
+.primary-button {
+    border: none;
+
+    background: #4ade80;
+
+    color: #07110b;
+
+    font-weight: bold;
+
+    padding: 11px 16px;
+
+    border-radius: 9px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+
+    white-space: nowrap;
+}
+
+
+.primary-button:hover {
+    filter: brightness(1.08);
+
+    transform: translateY(-1px);
+}
+
+
+.secondary-button {
+    border: 1px solid #303846;
+
+    background: #202631;
+
+    color: #dbe3ed;
+
+    padding: 11px 16px;
+
+    border-radius: 9px;
+
+    cursor: pointer;
+}
+
+
+.secondary-button:hover {
+    background: #29313e;
+}
+
+
+/* ========================================= */
+/* MODAL */
+/* ========================================= */
+
+.modal-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.72);
+
+    display: none;
+
+    justify-content: center;
+
+    align-items: center;
+
+    z-index: 9999;
+
+    padding: 20px;
+}
+
+
+.modal-overlay.show {
+    display: flex;
+}
+
+
+.modal {
+    width: 100%;
+
+    max-width: 760px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    background: #171c25;
+
+    border: 1px solid #303846;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.5);
+}
+
+
+.modal-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    padding: 24px;
+
+    border-bottom: 1px solid #252c38;
+}
+
+
+.modal-header h2 {
+    margin-bottom: 5px;
+}
+
+
+.modal-header span {
+    color: #7f8998;
+
+    font-size: 13px;
+}
+
+
+.close-button {
+    border: none;
+
+    background: transparent;
+
+    color: #9aa3b2;
+
+    font-size: 28px;
+
+    cursor: pointer;
+
+    line-height: 1;
+}
+
+
+.close-button:hover {
+    color: #ffffff;
+}
+
+
+/* ========================================= */
+/* FORM MODAL */
+/* ========================================= */
+
+#formVeiculo {
+    padding: 24px;
+}
+
+
+.form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+
+.form-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 25px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #252c38;
+}
+
+
+/* ========================================= */
+/* PÁGINAS FUTURAS */
+/* ========================================= */
+
+.empty-page {
+    min-height: 450px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #171c25;
+
+    border: 1px solid #252c38;
+
+    border-radius: 14px;
+
+    text-align: center;
+}
+
+
+.empty-page span {
+    font-size: 50px;
+
+    margin-bottom: 15px;
+}
+
+
+.empty-page h2 {
+    margin-bottom: 8px;
+}
+
+
+.empty-page p {
+    color: #7f8998;
+}
+
+
+/* ========================================= */
+/* RESPONSIVO */
+/* ========================================= */
+
+@media (max-width: 1100px) {
+
+    .cards {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filtros-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
 
 }
 
 
-/* ========================================= */
-/* NORMALIZAR TEXTO */
-/* ========================================= */
+@media (max-width: 750px) {
 
-function normalizar(valor) {
+    .sidebar {
+        width: 70px;
 
-    return String(valor || "")
-        .normalize("NFD")
-        .replace(
-            /[\u0300-\u036f]/g,
-            ""
-        )
-        .toLowerCase()
-        .trim();
+        padding: 20px 8px;
+    }
+
+
+    .logo span,
+    .menu-item span {
+        display: none;
+    }
+
+
+    .logo {
+        justify-content: center;
+
+        padding-left: 0;
+
+        padding-right: 0;
+    }
+
+
+    .menu-item {
+        justify-content: center;
+    }
+
+
+    .main {
+        margin-left: 70px;
+
+        padding: 20px;
+    }
+
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .filtros-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .page-heading {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
 
 }
 
 
-/* ========================================= */
-/* VALOR SEGURO */
-/* ========================================= */
+@media (max-width: 550px) {
 
-function valorSeguro(valor) {
-
-    if (
-        valor === null ||
-        valor === undefined ||
-        valor === ""
-    ) {
-
-        return "-";
-
+    .cards {
+        grid-template-columns: 1fr;
     }
 
-    return String(valor)
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+
+    .topbar {
+        align-items: flex-start;
+
+        gap: 20px;
+
+        flex-direction: column;
+    }
+
+
+    .status-container {
+        flex-direction: column;
+    }
 
 }
-
-
-/* ========================================= */
-/* ABRIR MODAL */
-/* ========================================= */
-
-function abrirModalVeiculo() {
-
-    modal.classList.add("show");
-
-}
-
-
-/* ========================================= */
-/* FECHAR MODAL */
-/* ========================================= */
-
-function fecharModalVeiculo() {
-
-    modal.classList.remove("show");
-
-}
-
-
-/* ========================================= */
-/* EVENTO BOTÃO NOVO VEÍCULO */
-/* ========================================= */
-
-btnNovoVeiculo.onclick =
-    abrirModalVeiculo;
-
-
-/* ========================================= */
-/* FECHAR MODAL */
-/* ========================================= */
-
-btnFecharModal.onclick =
-    fecharModalVeiculo;
-
-
-btnCancelar.onclick =
-    fecharModalVeiculo;
-
-
-/* ========================================= */
-/* FECHAR CLICANDO FORA */
-/* ========================================= */
-
-modal.addEventListener(
-    "click",
-    function (evento) {
-
-        if (
-            evento.target === modal
-        ) {
-
-            fecharModalVeiculo();
-
-        }
-
-    }
-);
-
-
-/* ========================================= */
-/* ESC FECHA MODAL */
-/* ========================================= */
-
-document.addEventListener(
-    "keydown",
-    function (evento) {
-
-        if (
-            evento.key === "Escape"
-        ) {
-
-            fecharModalVeiculo();
-
-        }
-
-    }
-);
-
-
-/* ========================================= */
-/* ÁREA → OPERAÇÃO */
-/* ========================================= */
-
-selectArea.addEventListener(
-    "change",
-    function () {
-
-        const area =
-            selectArea.value;
-
-
-        selectOperacao.innerHTML = "";
-
-        selectSuboperacao.innerHTML = "";
-
-
-        selectSuboperacao.disabled =
-            true;
-
-
-        if (!area) {
-
-            selectOperacao.disabled =
-                true;
-
-            selectOperacao.innerHTML = `
-                <option value="">
-                    Selecione a área primeiro
-                </option>
-            `;
-
-            selectSuboperacao.innerHTML = `
-                <option value="">
-                    Selecione a operação primeiro
-                </option>
-            `;
-
-            return;
-
-        }
-
-
-        selectOperacao.disabled =
-            false;
-
-
-        /*
-         * Hierarquia atual:
-         *
-         * Coleta → Nexta
-         * Entrega → Raízen
-         * JET → JET
-         *
-         * Depois podemos transformar
-         * isso em uma configuração
-         * dinâmica.
-         */
-
-        let operacoes = [];
-
-
-        if (area === "Coleta") {
-
-            operacoes = [
-                "Nexta"
-            ];
-
-        }
-
-
-        else if (area === "Entrega") {
-
-            operacoes = [
-                "Raízen"
-            ];
-
-        }
-
-
-        else if (area === "JET") {
-
-            operacoes = [
-                "JET"
-            ];
-
-        }
-
-
-        selectOperacao.innerHTML = `
-            <option value="">
-                Selecione
-            </option>
-        `;
-
-
-        operacoes.forEach(
-            operacao => {
-
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-                option.value =
-                    operacao;
-
-                option.textContent =
-                    operacao;
-
-                selectOperacao.appendChild(
-                    option
-                );
-
-            }
-        );
-
-    }
-);
-
-
-/* ========================================= */
-/* OPERAÇÃO → SUBOPERAÇÃO */
-/* ========================================= */
-
-selectOperacao.addEventListener(
-    "change",
-    function () {
-
-        const area =
-            selectArea.value;
-
-
-        const operacao =
-            selectOperacao.value;
-
-
-        selectSuboperacao.innerHTML =
-            "";
-
-
-        selectSuboperacao.disabled =
-            false;
-
-
-        /*
-         * Regra atual:
-         *
-         * Entrega + Raízen
-         * → City
-         * → Dedicado
-         */
-
-        if (
-            area === "Entrega" &&
-            normalizar(operacao) === "raizen"
-        ) {
-
-            selectSuboperacao.innerHTML = `
-
-                <option value="">
-                    Selecione
-                </option>
-
-                <option value="City">
-                    City
-                </option>
-
-                <option value="Dedicado">
-                    Dedicado
-                </option>
-
-            `;
-
-            return;
-
-        }
-
-
-        /*
-         * Para as demais combinações,
-         * usamos Geral por enquanto.
-         */
-
-        selectSuboperacao.innerHTML = `
-
-            <option value="">
-                Selecione
-            </option>
-
-            <option value="Geral">
-                Geral
-            </option>
-
-        `;
-
-    }
-);
-
-
-/* ========================================= */
-/* SALVAR NOVO VEÍCULO */
-/* ========================================= */
-
-formVeiculo.addEventListener(
-    "submit",
-    function (evento) {
-
-        evento.preventDefault();
-
-
-        const novoVeiculo = {
-
-            id: gerarId(),
-
-            cv:
-                document.getElementById(
-                    "cv"
-                ).value.trim(),
-
-            sm1:
-                document.getElementById(
-                    "sm1"
-                ).value.trim(),
-
-            sm2:
-                document.getElementById(
-                    "sm2"
-                ).value.trim(),
-
-            area:
-                document.getElementById(
-                    "area"
-                ).value,
-
-            operacao:
-                document.getElementById(
-                    "operacao"
-                ).value,
-
-            suboperacao:
-                document.getElementById(
-                    "suboperacao"
-                ).value,
-
-            status:
-                document.getElementById(
-                    "status"
-                ).value
-
-        };
-
-
-        /* ================================= */
-        /* VALIDAÇÃO */
-        /* ================================= */
-
-        if (
-            !novoVeiculo.cv ||
-            !novoVeiculo.sm1 ||
-            !novoVeiculo.sm2 ||
-            !novoVeiculo.area ||
-            !novoVeiculo.operacao ||
-            !novoVeiculo.suboperacao ||
-            !novoVeiculo.status
-        ) {
-
-            alert(
-                "Preencha todos os campos."
-            );
-
-            return;
-
-        }
-
-
-        /* ================================= */
-        /* VERIFICAR CV DUPLICADO */
-        /* ================================= */
-
-        const cvExiste =
-            frota.some(
-                veiculo =>
-                    normalizar(
-                        veiculo.cv
-                    ) ===
-                    normalizar(
-                        novoVeiculo.cv
-                    )
-            );
-
-
-        if (cvExiste) {
-
-            alert(
-                "Já existe um veículo cadastrado com este CV."
-            );
-
-            return;
-
-        }
-
-
-        /* ================================= */
-        /* ADICIONAR */
-        /* ================================= */
-
-        frotaAdicional.push(
-            novoVeiculo
-        );
-
-
-        salvarAdicionais();
-
-
-        /*
-         * Atualiza a frota em memória
-         */
-
-        frota.push(
-            novoVeiculo
-        );
-
-
-        atualizarSistema();
-
-
-        /* ================================= */
-        /* LIMPAR FORMULÁRIO */
-        /* ================================= */
-
-        formVeiculo.reset();
-
-
-        selectOperacao.disabled =
-            true;
-
-
-        selectSuboperacao.disabled =
-            true;
-
-
-        selectOperacao.innerHTML = `
-            <option value="">
-                Selecione a área primeiro
-            </option>
-        `;
-
-
-        selectSuboperacao.innerHTML = `
-            <option value="">
-                Selecione a operação primeiro
-            </option>
-        `;
-
-
-        /* ================================= */
-        /* FECHAR MODAL */
-        /* ================================= */
-
-        fecharModalVeiculo();
-
-
-        alert(
-            "Veículo cadastrado com sucesso!"
-        );
-
-    }
-);
-
-
-/* ========================================= */
-/* INICIALIZAÇÃO */
-/* ========================================= */
-
-carregarFrota();
