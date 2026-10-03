@@ -419,5 +419,8 @@ td {
     .cards {
         grid-template-columns: 1fr;
     }
+    .reserve-status {
+    color: #eab308;
+}
 
 }
