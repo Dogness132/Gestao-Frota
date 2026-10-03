@@ -1,26 +1,19 @@
-const URL_FROTA = "data/frota.json";
+// ============================================================
+// GESTÃO DE FROTA
+// Versão 9
+// ============================================================
 
-const CHAVE_ADICIONAIS = "frota_adicional";
-const CHAVE_ALTERACOES = "frota_alteracoes";
-
-const CHAVE_MOTORISTAS =
-    "motoristas_cadastrados";
-
+const CHAVE_FROTA_ADICIONAL = "frota_adicional";
+const CHAVE_FROTA_ALTERACOES = "frota_alteracoes";
+const CHAVE_MOTORISTAS = "motoristas_cadastrados";
 
 let frota = [];
-
-let frotaBase = [];
-
-let frotaAdicional = [];
-
-let frotaAlteracoes = {};
-
 let motoristas = [];
 
 
-// ======================================================
+// ============================================================
 // HIERARQUIA
-// ======================================================
+// ============================================================
 
 const HIERARQUIA = {
 
@@ -37,7 +30,6 @@ const HIERARQUIA = {
 
     },
 
-
     "Coleta": {
 
         "Raízen": [
@@ -50,7 +42,6 @@ const HIERARQUIA = {
 
     },
 
-
     "JET": {
 
         "JET": [
@@ -62,417 +53,466 @@ const HIERARQUIA = {
 };
 
 
-// ======================================================
-// FUNÇÕES GERAIS
-// ======================================================
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
 
-function normalizar(valor) {
+document.addEventListener("DOMContentLoaded", async () => {
 
-    return String(valor || "")
-        .trim()
-        .toLowerCase();
+    configurarNavegacao();
+
+    configurarHierarquiaVeiculo();
+
+    configurarHierarquiaMotorista();
+
+    configurarFiltrosMotoristas();
+
+    configurarModais();
+
+    await carregarFrota();
+
+    carregarMotoristas();
+
+    atualizarDashboard();
+
+    atualizarMotoristas();
+
+});
+
+
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+
+function configurarNavegacao() {
+
+    const itens = document.querySelectorAll(".menu-item[data-pagina]");
+
+    itens.forEach(item => {
+
+        item.addEventListener("click", event => {
+
+            event.preventDefault();
+
+            const pagina = item.dataset.pagina;
+
+            abrirPagina(pagina);
+
+        });
+
+    });
 
 }
 
 
-function valorSeguro(valor) {
+function abrirPagina(nome) {
 
-    return valor === undefined ||
-           valor === null
-        ? ""
-        : String(valor);
+    const paginas = document.querySelectorAll(".pagina");
+
+    paginas.forEach(pagina => {
+
+        pagina.classList.add("oculto");
+
+    });
+
+
+    const paginaSelecionada = document.getElementById(
+        `pagina${capitalizar(nome)}`
+    );
+
+    if (paginaSelecionada) {
+
+        paginaSelecionada.classList.remove("oculto");
+
+    }
+
+
+    const itens = document.querySelectorAll(".menu-item[data-pagina]");
+
+    itens.forEach(item => {
+
+        item.classList.remove("active");
+
+        if (item.dataset.pagina === nome) {
+
+            item.classList.add("active");
+
+        }
+
+    });
 
 }
 
 
-function gerarId() {
+// ============================================================
+// CAPITALIZAR
+// ============================================================
 
-    return Date.now().toString(36) +
-        Math.random()
-            .toString(36)
-            .substring(2, 8);
+function capitalizar(texto) {
+
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
 
 }
 
 
-// ======================================================
-// CARREGAR FROTA
-// ======================================================
+// ============================================================
+// FROTA
+// ============================================================
 
 async function carregarFrota() {
 
     try {
 
         const resposta = await fetch(
-            URL_FROTA + "?v=" + Date.now(),
+            `data/frota.json?v=${Date.now()}`,
             {
                 cache: "no-store"
             }
         );
 
-
         if (!resposta.ok) {
 
             throw new Error(
-                "Não foi possível carregar o arquivo frota.json"
+                `Erro HTTP ${resposta.status}`
             );
 
         }
 
+        const frotaBase = await resposta.json();
 
-        frotaBase =
-            await resposta.json();
+        const alteracoes = JSON.parse(
+            localStorage.getItem(CHAVE_FROTA_ALTERACOES) || "{}"
+        );
 
-    }
-    catch (erro) {
-
-        console.error(erro);
-
-        frotaBase = [];
-
-    }
-
-
-    try {
-
-        frotaAdicional =
-            JSON.parse(
-                localStorage.getItem(
-                    CHAVE_ADICIONAIS
-                )
-            ) || [];
-
-    }
-    catch {
-
-        frotaAdicional = [];
-
-    }
-
-
-    try {
-
-        frotaAlteracoes =
-            JSON.parse(
-                localStorage.getItem(
-                    CHAVE_ALTERACOES
-                )
-            ) || {};
-
-    }
-    catch {
-
-        frotaAlteracoes = {};
-
-    }
-
-
-    montarFrota();
-
-}
-
-
-// ======================================================
-// MONTAR FROTA
-// ======================================================
-
-function montarFrota() {
-
-    const baseComAlteracoes =
-        frotaBase.map(
-            veiculo => {
-
-                const alteracao =
-                    frotaAlteracoes[
-                        veiculo.id
-                    ] || {};
-
-
-                return {
-
-                    ...veiculo,
-
-                    ...alteracao
-
-                };
-
-            }
+        const adicionais = JSON.parse(
+            localStorage.getItem(CHAVE_FROTA_ADICIONAL) || "[]"
         );
 
 
-    frota = [
+        frota = frotaBase.map(veiculo => {
 
-        ...baseComAlteracoes,
+            const alteracao = alteracoes[veiculo.id];
 
-        ...frotaAdicional
+            if (alteracao) {
 
-    ];
+                return {
+                    ...veiculo,
+                    ...alteracao
+                };
+
+            }
+
+            return veiculo;
+
+        });
 
 
-    atualizarSistema();
+        frota = [
+            ...frota,
+            ...adicionais
+        ];
+
+
+        renderizarFrota();
+
+        atualizarDashboard();
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao carregar frota:",
+            erro
+        );
+
+        const tabela = document.getElementById(
+            "tabelaFrota"
+        );
+
+        if (tabela) {
+
+            tabela.innerHTML = `
+                <tr>
+                    <td colspan="10" class="empty-row">
+                        Erro ao carregar a frota.
+                    </td>
+                </tr>
+            `;
+
+        }
+
+    }
 
 }
 
 
-// ======================================================
-// STORAGE FROTA
-// ======================================================
+// ============================================================
+// RENDER FROTA
+// ============================================================
 
-function salvarAdicionais() {
+function renderizarFrota() {
 
-    localStorage.setItem(
-
-        CHAVE_ADICIONAIS,
-
-        JSON.stringify(
-            frotaAdicional
-        )
-
+    const tabela = document.getElementById(
+        "tabelaFrota"
     );
 
-}
+    if (!tabela) return;
+
+    tabela.innerHTML = "";
 
 
-function salvarAlteracoes() {
+    if (!frota.length) {
 
-    localStorage.setItem(
-
-        CHAVE_ALTERACOES,
-
-        JSON.stringify(
-            frotaAlteracoes
-        )
-
-    );
-
-}
-
-
-// ======================================================
-// ATUALIZAÇÃO GERAL
-// ======================================================
-
-function atualizarSistema() {
-
-    atualizarIndicadores();
-
-    atualizarGrafico();
-
-    atualizarDistribuicao();
-
-    atualizarTabelaDashboard();
-
-    atualizarFiltrosFrota();
-
-    atualizarTabelaFrota();
-
-}
-
-
-// ======================================================
-// DASHBOARD
-// ======================================================
-
-function atualizarIndicadores() {
-
-    const total =
-        frota.length;
-
-
-    const rodando =
-        frota.filter(
-            v =>
-                normalizar(v.status)
-                === "rodando"
-        ).length;
-
-
-    const parado =
-        frota.filter(
-            v =>
-                normalizar(v.status)
-                === "parado"
-        ).length;
-
-
-    const reserva =
-        frota.filter(
-            v =>
-                normalizar(v.status)
-                === "reserva"
-        ).length;
-
-
-    document.getElementById(
-        "frotaTotal"
-    ).textContent =
-        total;
-
-
-    document.getElementById(
-        "frotaOperando"
-    ).textContent =
-        rodando;
-
-
-    document.getElementById(
-        "frotaParada"
-    ).textContent =
-        parado;
-
-
-    document.getElementById(
-        "frotaReserva"
-    ).textContent =
-        reserva;
-
-
-    document.getElementById(
-        "legendOperando"
-    ).textContent =
-        rodando;
-
-
-    document.getElementById(
-        "legendParados"
-    ).textContent =
-        parado;
-
-
-    document.getElementById(
-        "legendReserva"
-    ).textContent =
-        reserva;
-
-
-    const percentual =
-        total > 0
-            ? Math.round(
-                (rodando / total) * 100
-            )
-            : 0;
-
-
-    document.getElementById(
-        "percentualOperacao"
-    ).textContent =
-        percentual + "%";
-
-}
-
-
-// ======================================================
-// GRÁFICO
-// ======================================================
-
-function atualizarGrafico() {
-
-    const total =
-        frota.length;
-
-
-    if (total === 0) {
-
-        document.getElementById(
-            "donut"
-        ).style.background =
-            "conic-gradient(#273241 0deg 360deg)";
+        tabela.innerHTML = `
+            <tr>
+                <td colspan="10" class="empty-row">
+                    Nenhum veículo cadastrado.
+                </td>
+            </tr>
+        `;
 
         return;
 
     }
 
 
-    const rodando =
-        frota.filter(
-            v =>
-                normalizar(v.status)
-                === "rodando"
-        ).length;
+    frota.forEach(veiculo => {
+
+        const linha = document.createElement("tr");
 
 
-    const parado =
-        frota.filter(
-            v =>
-                normalizar(v.status)
-                === "parado"
-        ).length;
+        linha.innerHTML = `
+
+            <td>
+                <strong>
+                    ${escapeHtml(veiculo.cv || "-")}
+                </strong>
+            </td>
+
+            <td>
+                ${escapeHtml(veiculo.sm1 || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(veiculo.sm2 || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(veiculo.area || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(veiculo.operacao || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(veiculo.suboperacao || "-")}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    nomeMotorista(veiculo.motoristaDia)
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    nomeMotorista(veiculo.motoristaNoite)
+                )}
+            </td>
+
+            <td>
+                ${badgeStatusVeiculo(veiculo.status)}
+            </td>
+
+            <td>
+
+                <div class="action-buttons">
+
+                    <button
+                        class="action-button"
+                        onclick="editarVeiculo('${escapeAttribute(veiculo.id)}')"
+                    >
+                        Editar
+                    </button>
+
+                </div>
+
+            </td>
+
+        `;
 
 
-    const grausRodando =
-        (rodando / total) * 360;
+        tabela.appendChild(linha);
 
-
-    const grausParado =
-        (parado / total) * 360;
-
-
-    const inicioReserva =
-        grausRodando +
-        grausParado;
-
-
-    document.getElementById(
-        "donut"
-    ).style.background =
-
-        `conic-gradient(
-            #22c55e 0deg ${grausRodando}deg,
-            #ef4444 ${grausRodando}deg ${inicioReserva}deg,
-            #f59e0b ${inicioReserva}deg 360deg
-        )`;
+    });
 
 }
 
 
-// ======================================================
-// DISTRIBUIÇÃO
-// ======================================================
+// ============================================================
+// MOTORISTA POR ID
+// ============================================================
 
-function atualizarDistribuicao() {
+function nomeMotorista(id) {
 
-    const total =
-        frota.length;
+    if (!id) {
 
+        return "-";
 
-    const raizen =
-        frota.filter(
-            v => {
-
-                const op =
-                    normalizar(
-                        v.operacao
-                    );
+    }
 
 
-                return (
-                    op === "raízen" ||
-                    op === "raizen"
-                );
-
-            }
-        ).length;
+    const motorista = motoristas.find(
+        item => String(item.id) === String(id)
+    );
 
 
-    const nexta =
-        frota.filter(
-            v =>
-                normalizar(
-                    v.operacao
-                ) === "nexta"
-        ).length;
+    if (!motorista) {
+
+        return "Não encontrado";
+
+    }
 
 
-    document.getElementById(
-        "quantidadeRaizen"
-    ).textContent =
-        raizen;
+    return motorista.nome || "-";
+
+}
 
 
-    document.getElementById(
-        "quantidadeNexta"
-    ).textContent =
-        nexta;
+// ============================================================
+// STATUS VEÍCULO
+// ============================================================
+
+function badgeStatusVeiculo(status) {
+
+    const classe = {
+
+        "Rodando": "status-rodando",
+
+        "Parado": "status-parado",
+
+        "Reserva": "status-reserva"
+
+    }[status] || "";
+
+
+    return `
+        <span class="status-badge ${classe}">
+            ${escapeHtml(status || "-")}
+        </span>
+    `;
+
+}
+
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+
+function atualizarDashboard() {
+
+    const total = frota.length;
+
+    const rodando = frota.filter(
+        v => v.status === "Rodando"
+    ).length;
+
+    const parado = frota.filter(
+        v => v.status === "Parado"
+    ).length;
+
+    const reserva = frota.filter(
+        v => v.status === "Reserva"
+    ).length;
+
+
+    setTexto("frotaTotal", total);
+
+    setTexto("frotaOperando", rodando);
+
+    setTexto("frotaParada", parado);
+
+    setTexto("frotaReserva", reserva);
+
+    setTexto("legendOperando", rodando);
+
+    setTexto("legendParados", parado);
+
+    setTexto("legendReserva", reserva);
+
+
+    const percentual =
+        total > 0
+            ? Math.round((rodando / total) * 100)
+            : 0;
+
+
+    setTexto(
+        "percentualOperacao",
+        `${percentual}%`
+    );
+
+
+    const donut = document.querySelector(".donut");
+
+    if (donut) {
+
+        const grausRodando =
+            total > 0
+                ? (rodando / total) * 360
+                : 0;
+
+        const grausParado =
+            total > 0
+                ? (parado / total) * 360
+                : 0;
+
+        const inicioParado =
+            grausRodando;
+
+        const fimParado =
+            grausRodando + grausParado;
+
+
+        donut.style.background = `
+            conic-gradient(
+                var(--green) 0deg ${grausRodando}deg,
+                var(--red) ${inicioParado}deg ${fimParado}deg,
+                var(--yellow) ${fimParado}deg 360deg
+            )
+        `;
+
+    }
+
+
+    const raizen = frota.filter(
+        v => v.operacao === "Raízen"
+    ).length;
+
+    const nexta = frota.filter(
+        v => v.operacao === "Nexta"
+    ).length;
+
+
+    setTexto(
+        "distribuicaoRaizenNumero",
+        raizen
+    );
+
+    setTexto(
+        "distribuicaoNextaNumero",
+        nexta
+    );
+
+    setTexto(
+        "distribuicaoRaizenTexto",
+        `${raizen} veículos`
+    );
+
+    setTexto(
+        "distribuicaoNextaTexto",
+        `${nexta} veículos`
+    );
 
 
     const percentualRaizen =
@@ -480,492 +520,457 @@ function atualizarDistribuicao() {
             ? (raizen / total) * 100
             : 0;
 
-
     const percentualNexta =
         total > 0
             ? (nexta / total) * 100
             : 0;
 
 
-    document.getElementById(
-        "barraRaizen"
-    ).style.width =
-        percentualRaizen + "%";
+    const barraRaizen =
+        document.getElementById(
+            "barraRaizen"
+        );
+
+    const barraNexta =
+        document.getElementById(
+            "barraNexta"
+        );
 
 
-    document.getElementById(
-        "barraNexta"
-    ).style.width =
-        percentualNexta + "%";
+    if (barraRaizen) {
 
-}
-
-
-// ======================================================
-// STATUS FROTA
-// ======================================================
-
-function obterClasseStatus(status) {
-
-    const normalizado =
-        normalizar(status);
-
-
-    if (normalizado === "rodando") {
-
-        return "status-badge status-rodando";
+        barraRaizen.style.width =
+            `${percentualRaizen}%`;
 
     }
 
 
-    if (normalizado === "parado") {
+    if (barraNexta) {
 
-        return "status-badge status-parado";
-
-    }
-
-
-    if (normalizado === "reserva") {
-
-        return "status-badge status-reserva";
-
-    }
-
-
-    return "status-badge";
-
-}
-
-
-// ======================================================
-// TABELA DASHBOARD
-// ======================================================
-
-function atualizarTabelaDashboard() {
-
-    const tabela =
-        document.getElementById(
-            "tabelaDashboard"
-        );
-
-
-    tabela.innerHTML = "";
-
-
-    frota.forEach(
-        veiculo => {
-
-            const linha =
-                document.createElement(
-                    "tr"
-                );
-
-
-            linha.innerHTML = `
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.cv
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.sm1
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.sm2
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.area
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.operacao
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.suboperacao
-                    )}
-                </td>
-
-                <td>
-
-                    <span class="${obterClasseStatus(
-                        veiculo.status
-                    )}">
-
-                        ${valorSeguro(
-                            veiculo.status
-                        )}
-
-                    </span>
-
-                </td>
-
-            `;
-
-
-            tabela.appendChild(
-                linha
-            );
-
-        }
-    );
-
-}
-
-
-// ======================================================
-// FILTRO FROTA
-// ======================================================
-
-function obterFrotaFiltrada() {
-
-    const busca =
-        normalizar(
-            document.getElementById(
-                "buscaFrota"
-            ).value
-        );
-
-
-    const area =
-        document.getElementById(
-            "filtroArea"
-        ).value;
-
-
-    const operacao =
-        document.getElementById(
-            "filtroOperacao"
-        ).value;
-
-
-    const status =
-        document.getElementById(
-            "filtroStatus"
-        ).value;
-
-
-    return frota.filter(
-        veiculo => {
-
-            const textoBusca = [
-
-                veiculo.cv,
-
-                veiculo.sm1,
-
-                veiculo.sm2
-
-            ]
-                .map(normalizar)
-                .join(" ");
-
-
-            return (
-
-                (
-                    !busca ||
-                    textoBusca.includes(
-                        busca
-                    )
-                )
-
-                &&
-
-                (
-                    !area ||
-                    veiculo.area === area
-                )
-
-                &&
-
-                (
-                    !operacao ||
-                    veiculo.operacao ===
-                    operacao
-                )
-
-                &&
-
-                (
-                    !status ||
-                    veiculo.status ===
-                    status
-                )
-
-            );
-
-        }
-    );
-
-}
-
-
-// ======================================================
-// FILTROS FROTA
-// ======================================================
-
-function atualizarFiltrosFrota() {
-
-    const filtroArea =
-        document.getElementById(
-            "filtroArea"
-        );
-
-
-    const filtroOperacao =
-        document.getElementById(
-            "filtroOperacao"
-        );
-
-
-    const areaAtual =
-        filtroArea.value;
-
-
-    const operacaoAtual =
-        filtroOperacao.value;
-
-
-    const areas = [
-        ...new Set(
-            frota
-                .map(
-                    v => v.area
-                )
-                .filter(Boolean)
-        )
-    ];
-
-
-    const operacoes = [
-        ...new Set(
-            frota
-                .map(
-                    v => v.operacao
-                )
-                .filter(Boolean)
-        )
-    ];
-
-
-    filtroArea.innerHTML =
-        `<option value="">
-            Todas
-        </option>`;
-
-
-    areas.forEach(
-        area => {
-
-            filtroArea.innerHTML += `
-
-                <option value="${area}">
-                    ${area}
-                </option>
-
-            `;
-
-        }
-    );
-
-
-    filtroOperacao.innerHTML =
-        `<option value="">
-            Todas
-        </option>`;
-
-
-    operacoes.forEach(
-        operacao => {
-
-            filtroOperacao.innerHTML += `
-
-                <option value="${operacao}">
-                    ${operacao}
-                </option>
-
-            `;
-
-        }
-    );
-
-
-    if (
-        areas.includes(
-            areaAtual
-        )
-    ) {
-
-        filtroArea.value =
-            areaAtual;
-
-    }
-
-
-    if (
-        operacoes.includes(
-            operacaoAtual
-        )
-    ) {
-
-        filtroOperacao.value =
-            operacaoAtual;
+        barraNexta.style.width =
+            `${percentualNexta}%`;
 
     }
 
 }
 
 
-// ======================================================
-// TABELA FROTA
-// ======================================================
+// ============================================================
+// MODAL VEÍCULO
+// ============================================================
 
-function atualizarTabelaFrota() {
+function configurarModais() {
 
-    const tabela =
+    const btnNovo =
         document.getElementById(
-            "tabelaFrota"
+            "btnNovoVeiculo"
+        );
+
+    const btnFechar =
+        document.getElementById(
+            "btnFecharModal"
+        );
+
+    const btnCancelar =
+        document.getElementById(
+            "btnCancelarVeiculo"
+        );
+
+    const modal =
+        document.getElementById(
+            "modalVeiculo"
         );
 
 
-    const dados =
-        obterFrotaFiltrada();
+    if (btnNovo) {
+
+        btnNovo.addEventListener(
+            "click",
+            abrirNovoVeiculo
+        );
+
+    }
 
 
-    tabela.innerHTML = "";
+    if (btnFechar) {
+
+        btnFechar.addEventListener(
+            "click",
+            fecharModalVeiculo
+        );
+
+    }
 
 
-    dados.forEach(
-        veiculo => {
+    if (btnCancelar) {
 
-            const linha =
-                document.createElement(
-                    "tr"
-                );
+        btnCancelar.addEventListener(
+            "click",
+            fecharModalVeiculo
+        );
 
-
-            linha.innerHTML = `
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.cv
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.sm1
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.sm2
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.area
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.operacao
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        veiculo.suboperacao
-                    )}
-                </td>
-
-                <td>
-
-                    <span class="${obterClasseStatus(
-                        veiculo.status
-                    )}">
-
-                        ${valorSeguro(
-                            veiculo.status
-                        )}
-
-                    </span>
-
-                </td>
-
-                <td>
-
-                    <div class="table-actions">
-
-                        <button
-                            class="action-button edit"
-                            onclick="abrirEdicao('${veiculo.id}')"
-                        >
-                            ✏️ Editar
-                        </button>
-
-                    </div>
-
-                </td>
-
-            `;
+    }
 
 
-            tabela.appendChild(
-                linha
-            );
+    if (modal) {
 
-        }
-    );
+        modal.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target === modal
+                ) {
+
+                    fecharModalVeiculo();
+
+                }
+
+            }
+        );
+
+    }
 
 
-    document.getElementById(
-        "contadorFrota"
-    ).textContent =
+    const form =
+        document.getElementById(
+            "formVeiculo"
+        );
 
-        `${dados.length} veículo${
-            dados.length !== 1
-                ? "s"
-                : ""
-        }`;
+
+    if (form) {
+
+        form.addEventListener(
+            "submit",
+            salvarVeiculo
+        );
+
+    }
+
+
+    const btnNovoMotorista =
+        document.getElementById(
+            "btnNovoMotorista"
+        );
+
+    const btnFecharMotorista =
+        document.getElementById(
+            "btnFecharModalMotorista"
+        );
+
+    const btnCancelarMotorista =
+        document.getElementById(
+            "btnCancelarMotorista"
+        );
+
+    const modalMotorista =
+        document.getElementById(
+            "modalMotorista"
+        );
+
+
+    if (btnNovoMotorista) {
+
+        btnNovoMotorista.addEventListener(
+            "click",
+            abrirNovoMotorista
+        );
+
+    }
+
+
+    if (btnFecharMotorista) {
+
+        btnFecharMotorista.addEventListener(
+            "click",
+            fecharModalMotorista
+        );
+
+    }
+
+
+    if (btnCancelarMotorista) {
+
+        btnCancelarMotorista.addEventListener(
+            "click",
+            fecharModalMotorista
+        );
+
+    }
+
+
+    if (modalMotorista) {
+
+        modalMotorista.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target === modalMotorista
+                ) {
+
+                    fecharModalMotorista();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    const formMotorista =
+        document.getElementById(
+            "formMotorista"
+        );
+
+
+    if (formMotorista) {
+
+        formMotorista.addEventListener(
+            "submit",
+            salvarMotorista
+        );
+
+    }
 
 }
 
 
-// ======================================================
+// ============================================================
 // NOVO VEÍCULO
-// ======================================================
+// ============================================================
 
 function abrirNovoVeiculo() {
 
-    document.getElementById(
-        "tituloModal"
-    ).textContent =
-        "Novo veículo";
-
+    limparFormularioVeiculo();
 
     document.getElementById(
-        "subtituloModal"
-    ).textContent =
-        "Cadastre um novo veículo na frota.";
+        "tituloModalVeiculo"
+    ).textContent = "Novo veículo";
 
+
+    preencherMotoristasVeiculo();
+
+
+    document.getElementById(
+        "modalVeiculo"
+    ).classList.add("show");
+
+}
+
+
+// ============================================================
+// EDITAR VEÍCULO
+// ============================================================
+
+function editarVeiculo(id) {
+
+    const veiculo = frota.find(
+        item => String(item.id) === String(id)
+    );
+
+
+    if (!veiculo) {
+
+        alert("Veículo não encontrado.");
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        "tituloModalVeiculo"
+    ).textContent = "Editar veículo";
+
+
+    document.getElementById(
+        "veiculoId"
+    ).value = veiculo.id;
+
+
+    document.getElementById(
+        "cv"
+    ).value = veiculo.cv || "";
+
+
+    document.getElementById(
+        "sm1"
+    ).value = veiculo.sm1 || "";
+
+
+    document.getElementById(
+        "sm2"
+    ).value = veiculo.sm2 || "";
+
+
+    document.getElementById(
+        "status"
+    ).value = veiculo.status || "Rodando";
+
+
+    document.getElementById(
+        "area"
+    ).value = veiculo.area || "";
+
+
+    atualizarOperacoesVeiculo(
+        veiculo.operacao || ""
+    );
+
+
+    atualizarSuboperacoesVeiculo(
+        veiculo.suboperacao || ""
+    );
+
+
+    preencherMotoristasVeiculo(
+        veiculo.motoristaDia || "",
+        veiculo.motoristaNoite || ""
+    );
+
+
+    document.getElementById(
+        "modalVeiculo"
+    ).classList.add("show");
+
+}
+
+
+// ============================================================
+// SALVAR VEÍCULO
+// ============================================================
+
+function salvarVeiculo(event) {
+
+    event.preventDefault();
+
+
+    const idAtual =
+        document.getElementById(
+            "veiculoId"
+        ).value;
+
+
+    const dados = {
+
+        cv:
+            document.getElementById(
+                "cv"
+            ).value.trim(),
+
+        sm1:
+            document.getElementById(
+                "sm1"
+            ).value.trim(),
+
+        sm2:
+            document.getElementById(
+                "sm2"
+            ).value.trim(),
+
+        area:
+            document.getElementById(
+                "area"
+            ).value,
+
+        operacao:
+            document.getElementById(
+                "operacao"
+            ).value,
+
+        suboperacao:
+            document.getElementById(
+                "suboperacao"
+            ).value,
+
+        status:
+            document.getElementById(
+                "status"
+            ).value,
+
+        motoristaDia:
+            document.getElementById(
+                "motoristaDia"
+            ).value || "",
+
+        motoristaNoite:
+            document.getElementById(
+                "motoristaNoite"
+            ).value || ""
+
+    };
+
+
+    if (!dados.cv) {
+
+        alert("Informe o CV.");
+
+        return;
+
+    }
+
+
+    if (!idAtual) {
+
+        const adicionais = JSON.parse(
+            localStorage.getItem(
+                CHAVE_FROTA_ADICIONAL
+            ) || "[]"
+        );
+
+
+        const novo = {
+
+            id:
+                `local-${Date.now()}`,
+
+            ...dados
+
+        };
+
+
+        adicionais.push(novo);
+
+
+        localStorage.setItem(
+            CHAVE_FROTA_ADICIONAL,
+            JSON.stringify(adicionais)
+        );
+
+    } else {
+
+        const alteracoes = JSON.parse(
+            localStorage.getItem(
+                CHAVE_FROTA_ALTERACOES
+            ) || "{}"
+        );
+
+
+        alteracoes[idAtual] = dados;
+
+
+        localStorage.setItem(
+            CHAVE_FROTA_ALTERACOES,
+            JSON.stringify(alteracoes)
+        );
+
+    }
+
+
+    fecharModalVeiculo();
+
+    carregarFrota();
+
+}
+
+
+// ============================================================
+// LIMPAR FORM VEÍCULO
+// ============================================================
+
+function limparFormularioVeiculo() {
 
     document.getElementById(
         "formVeiculo"
@@ -977,804 +982,451 @@ function abrirNovoVeiculo() {
     ).value = "";
 
 
-    resetarOperacao();
+    const operacao =
+        document.getElementById(
+            "operacao"
+        );
 
-    resetarSuboperacao();
+    const suboperacao =
+        document.getElementById(
+            "suboperacao"
+        );
 
 
-    document.getElementById(
-        "modalVeiculo"
-    ).classList.add(
-        "show"
-    );
+    operacao.innerHTML = `
+        <option value="">
+            Selecione
+        </option>
+    `;
+
+
+    suboperacao.innerHTML = `
+        <option value="">
+            Selecione
+        </option>
+    `;
+
+
+    preencherMotoristasVeiculo();
 
 }
 
 
-// ======================================================
-// EDITAR VEÍCULO
-// ======================================================
+// ============================================================
+// FECHAR MODAL VEÍCULO
+// ============================================================
 
-function abrirEdicao(id) {
+function fecharModalVeiculo() {
 
-    const veiculo =
-        frota.find(
-            v =>
-                String(v.id) ===
-                String(id)
+    document.getElementById(
+        "modalVeiculo"
+    ).classList.remove("show");
+
+}
+
+
+// ============================================================
+// HIERARQUIA VEÍCULO
+// ============================================================
+
+function configurarHierarquiaVeiculo() {
+
+    const area =
+        document.getElementById(
+            "area"
         );
 
 
-    if (!veiculo) {
+    if (!area) return;
 
-        return;
+
+    area.addEventListener(
+        "change",
+        () => {
+
+            atualizarOperacoesVeiculo();
+
+            atualizarSuboperacoesVeiculo();
+
+            preencherMotoristasVeiculo();
+
+        }
+    );
+
+
+    const operacao =
+        document.getElementById(
+            "operacao"
+        );
+
+
+    if (operacao) {
+
+        operacao.addEventListener(
+            "change",
+            () => {
+
+                atualizarSuboperacoesVeiculo();
+
+                preencherMotoristasVeiculo();
+
+            }
+        );
 
     }
 
 
-    document.getElementById(
-        "tituloModal"
-    ).textContent =
-        "Editar veículo";
-
-
-    document.getElementById(
-        "subtituloModal"
-    ).textContent =
-        "Altere os dados do veículo.";
-
-
-    document.getElementById(
-        "veiculoId"
-    ).value =
-        veiculo.id;
-
-
-    document.getElementById(
-        "cv"
-    ).value =
-        valorSeguro(
-            veiculo.cv
+    const suboperacao =
+        document.getElementById(
+            "suboperacao"
         );
 
 
-    document.getElementById(
-        "sm1"
-    ).value =
-        valorSeguro(
-            veiculo.sm1
+    if (suboperacao) {
+
+        suboperacao.addEventListener(
+            "change",
+            () => {
+
+                preencherMotoristasVeiculo();
+
+            }
         );
 
-
-    document.getElementById(
-        "sm2"
-    ).value =
-        valorSeguro(
-            veiculo.sm2
-        );
-
-
-    document.getElementById(
-        "area"
-    ).value =
-        valorSeguro(
-            veiculo.area
-        );
-
-
-    carregarOperacoes(
-        veiculo.area,
-        veiculo.operacao
-    );
-
-
-    carregarSuboperacoes(
-        veiculo.area,
-        veiculo.operacao,
-        veiculo.suboperacao
-    );
-
-
-    document.getElementById(
-        "status"
-    ).value =
-        valorSeguro(
-            veiculo.status
-        );
-
-
-    document.getElementById(
-        "modalVeiculo"
-    ).classList.add(
-        "show"
-    );
+    }
 
 }
 
 
-// ======================================================
-// MODAL VEÍCULO
-// ======================================================
-
-function fecharModal() {
-
-    document.getElementById(
-        "modalVeiculo"
-    ).classList.remove(
-        "show"
-    );
-
-}
-
-
-// ======================================================
-// OPERAÇÕES
-// ======================================================
-
-function carregarOperacoes(
-    area,
+function atualizarOperacoesVeiculo(
     operacaoSelecionada = ""
 ) {
 
-    const campo =
+    const area =
+        document.getElementById(
+            "area"
+        );
+
+    const operacao =
         document.getElementById(
             "operacao"
         );
 
 
-    campo.innerHTML =
-        `<option value="">
+    if (!area || !operacao) return;
+
+
+    operacao.innerHTML = `
+        <option value="">
             Selecione
-        </option>`;
+        </option>
+    `;
 
 
-    campo.disabled =
-        true;
+    const areaSelecionada =
+        area.value;
 
 
     if (
-        !area ||
-        !HIERARQUIA[area]
+        !areaSelecionada ||
+        !HIERARQUIA[areaSelecionada]
     ) {
+
+        atualizarSuboperacoesVeiculo();
 
         return;
 
     }
 
 
-    const operacoes =
-        Object.keys(
-            HIERARQUIA[area]
-        );
+    Object.keys(
+        HIERARQUIA[areaSelecionada]
+    ).forEach(nomeOperacao => {
 
-
-    operacoes.forEach(
-        operacao => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                operacao;
-
-
-            option.textContent =
-                operacao;
-
-
-            campo.appendChild(
-                option
+        const option =
+            document.createElement(
+                "option"
             );
 
+        option.value =
+            nomeOperacao;
+
+        option.textContent =
+            nomeOperacao;
+
+
+        if (
+            nomeOperacao ===
+            operacaoSelecionada
+        ) {
+
+            option.selected = true;
+
         }
-    );
 
 
-    campo.disabled =
-        false;
+        operacao.appendChild(option);
+
+    });
 
 
-    if (
-        operacaoSelecionada
-    ) {
-
-        campo.value =
-            operacaoSelecionada;
-
-    }
+    atualizarSuboperacoesVeiculo();
 
 }
 
 
-// ======================================================
-// SUBOPERAÇÕES
-// ======================================================
-
-function carregarSuboperacoes(
-    area,
-    operacao,
+function atualizarSuboperacoesVeiculo(
     suboperacaoSelecionada = ""
 ) {
 
-    const campo =
+    const area =
+        document.getElementById(
+            "area"
+        );
+
+    const operacao =
+        document.getElementById(
+            "operacao"
+        );
+
+    const suboperacao =
         document.getElementById(
             "suboperacao"
         );
 
 
-    campo.innerHTML =
-        `<option value="">
-            Selecione
-        </option>`;
-
-
-    campo.disabled =
-        true;
-
-
     if (
-
         !area ||
         !operacao ||
-        !HIERARQUIA[area] ||
-        !HIERARQUIA[area][operacao]
+        !suboperacao
+    ) return;
 
-    ) {
 
+    suboperacao.innerHTML = `
+        <option value="">
+            Selecione
+        </option>
+    `;
+
+
+    const lista =
+        HIERARQUIA[
+            area.value
+        ]?.[
+            operacao.value
+        ] || [];
+
+
+    lista.forEach(nome => {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value = nome;
+
+        option.textContent = nome;
+
+
+        if (
+            nome ===
+            suboperacaoSelecionada
+        ) {
+
+            option.selected = true;
+
+        }
+
+
+        suboperacao.appendChild(option);
+
+    });
+
+}
+
+
+// ============================================================
+// MOTORISTAS DISPONÍVEIS PARA VEÍCULO
+// ============================================================
+
+function preencherMotoristasVeiculo(
+    motoristaDiaSelecionado = "",
+    motoristaNoiteSelecionado = ""
+) {
+
+    const selectDia =
+        document.getElementById(
+            "motoristaDia"
+        );
+
+    const selectNoite =
+        document.getElementById(
+            "motoristaNoite"
+        );
+
+
+    if (!selectDia || !selectNoite) {
         return;
-
     }
 
 
-    const suboperacoes =
-        HIERARQUIA[
-            area
-        ][
-            operacao
-        ];
+    const area =
+        document.getElementById(
+            "area"
+        )?.value || "";
 
 
-    suboperacoes.forEach(
-        suboperacao => {
+    const operacao =
+        document.getElementById(
+            "operacao"
+        )?.value || "";
+
+
+    const suboperacao =
+        document.getElementById(
+            "suboperacao"
+        )?.value || "";
+
+
+    const disponiveis =
+        motoristas.filter(motorista => {
+
+            if (
+                motorista.status !==
+                "Ativo"
+            ) {
+
+                return false;
+
+            }
+
+
+            if (
+                area &&
+                motorista.area !== area
+            ) {
+
+                return false;
+
+            }
+
+
+            if (
+                operacao &&
+                motorista.operacao !==
+                operacao
+            ) {
+
+                return false;
+
+            }
+
+
+            if (
+                suboperacao &&
+                motorista.suboperacao !==
+                suboperacao
+            ) {
+
+                return false;
+
+            }
+
+
+            return true;
+
+        });
+
+
+    montarSelectMotoristas(
+        selectDia,
+        disponiveis,
+        motoristaDiaSelecionado
+    );
+
+
+    montarSelectMotoristas(
+        selectNoite,
+        disponiveis,
+        motoristaNoiteSelecionado
+    );
+
+}
+
+
+function montarSelectMotoristas(
+    select,
+    lista,
+    selecionado
+) {
+
+    select.innerHTML = `
+        <option value="">
+            Sem motorista
+        </option>
+    `;
+
+
+    lista
+        .sort(
+            (a, b) =>
+                a.nome.localeCompare(
+                    b.nome,
+                    "pt-BR"
+                )
+        )
+        .forEach(motorista => {
 
             const option =
                 document.createElement(
                     "option"
                 );
 
-
             option.value =
-                suboperacao;
-
+                motorista.id;
 
             option.textContent =
-                suboperacao;
-
-
-            campo.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-    campo.disabled =
-        false;
-
-
-    if (
-        suboperacaoSelecionada
-    ) {
-
-        campo.value =
-            suboperacaoSelecionada;
-
-    }
-
-}
-
-
-// ======================================================
-// RESETAR OPERAÇÃO
-// ======================================================
-
-function resetarOperacao() {
-
-    const campo =
-        document.getElementById(
-            "operacao"
-        );
-
-
-    campo.innerHTML =
-        `<option value="">
-            Selecione a área primeiro
-        </option>`;
-
-
-    campo.value =
-        "";
-
-
-    campo.disabled =
-        true;
-
-}
-
-
-// ======================================================
-// RESETAR SUBOPERAÇÃO
-// ======================================================
-
-function resetarSuboperacao() {
-
-    const campo =
-        document.getElementById(
-            "suboperacao"
-        );
-
-
-    campo.innerHTML =
-        `<option value="">
-            Selecione a operação primeiro
-        </option>`;
-
-
-    campo.value =
-        "";
-
-
-    campo.disabled =
-        true;
-
-}
-
-
-// ======================================================
-// ÁREA DA FROTA
-// ======================================================
-
-document.getElementById(
-    "area"
-).addEventListener(
-    "change",
-    function () {
-
-        const area =
-            this.value;
-
-
-        resetarSuboperacao();
-
-
-        carregarOperacoes(
-            area
-        );
-
-
-        if (
-            area === "JET"
-        ) {
-
-            carregarOperacoes(
-                "JET",
-                "JET"
-            );
-
-
-            carregarSuboperacoes(
-                "JET",
-                "JET",
-                "JET"
-            );
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// OPERAÇÃO DA FROTA
-// ======================================================
-
-document.getElementById(
-    "operacao"
-).addEventListener(
-    "change",
-    function () {
-
-        const area =
-            document.getElementById(
-                "area"
-            ).value;
-
-
-        const operacao =
-            this.value;
-
-
-        carregarSuboperacoes(
-            area,
-            operacao
-        );
-
-
-        if (
-
-            area === "JET" &&
-            operacao === "JET"
-
-        ) {
-
-            document.getElementById(
-                "suboperacao"
-            ).value =
-                "JET";
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// FORMULÁRIO FROTA
-// ======================================================
-
-document.getElementById(
-    "formVeiculo"
-).addEventListener(
-    "submit",
-    function (event) {
-
-        event.preventDefault();
-
-
-        const id =
-            document.getElementById(
-                "veiculoId"
-            ).value;
-
-
-        const cv =
-            document.getElementById(
-                "cv"
-            ).value.trim();
-
-
-        const sm1 =
-            document.getElementById(
-                "sm1"
-            ).value.trim();
-
-
-        const sm2 =
-            document.getElementById(
-                "sm2"
-            ).value.trim();
-
-
-        const area =
-            document.getElementById(
-                "area"
-            ).value;
-
-
-        const operacao =
-            document.getElementById(
-                "operacao"
-            ).value;
-
-
-        const suboperacao =
-            document.getElementById(
-                "suboperacao"
-            ).value;
-
-
-        const status =
-            document.getElementById(
-                "status"
-            ).value;
-
-
-        if (!cv) {
-
-            alert(
-                "Informe o CV do veículo."
-            );
-
-            return;
-
-        }
-
-
-        if (!area) {
-
-            alert(
-                "Selecione a área."
-            );
-
-            return;
-
-        }
-
-
-        if (!operacao) {
-
-            alert(
-                "Selecione a operação."
-            );
-
-            return;
-
-        }
-
-
-        if (!suboperacao) {
-
-            alert(
-                "Selecione a suboperação."
-            );
-
-            return;
-
-        }
-
-
-        const cvNormalizado =
-            normalizar(cv);
-
-
-        const duplicado =
-            frota.some(
-                veiculo => {
-
-                    if (
-                        id &&
-                        String(
-                            veiculo.id
-                        ) === String(id)
-                    ) {
-
-                        return false;
-
-                    }
-
-
-                    return (
-                        normalizar(
-                            veiculo.cv
-                        ) ===
-                        cvNormalizado
-                    );
-
-                }
-            );
-
-
-        if (duplicado) {
-
-            alert(
-                "Já existe um veículo cadastrado com este CV."
-            );
-
-            return;
-
-        }
-
-
-        const dados = {
-
-            cv,
-
-            sm1,
-
-            sm2,
-
-            area,
-
-            operacao,
-
-            suboperacao,
-
-            status
-
-        };
-
-
-        if (!id) {
-
-            const novoVeiculo = {
-
-                id:
-                    gerarId(),
-
-                ...dados
-
-            };
-
-
-            frotaAdicional.push(
-                novoVeiculo
-            );
-
-
-            salvarAdicionais();
-
-        }
-        else {
-
-            const indexAdicional =
-                frotaAdicional.findIndex(
-                    veiculo =>
-                        String(
-                            veiculo.id
-                        ) === String(id)
-                );
+                `${motorista.nome} — ${motorista.turno}`;
 
 
             if (
-                indexAdicional !== -1
+                String(motorista.id) ===
+                String(selecionado)
             ) {
 
-                frotaAdicional[
-                    indexAdicional
-                ] = {
-
-                    ...frotaAdicional[
-                        indexAdicional
-                    ],
-
-                    ...dados
-
-                };
-
-
-                salvarAdicionais();
-
-            }
-            else {
-
-                frotaAlteracoes[id] = {
-
-                    ...(
-                        frotaAlteracoes[id]
-                        || {}
-                    ),
-
-                    ...dados
-
-                };
-
-
-                salvarAlteracoes();
+                option.selected = true;
 
             }
 
-        }
+
+            select.appendChild(option);
+
+        });
+
+}
 
 
-        montarFrota();
-
-        fecharModal();
-
-    }
-);
-
-
-// ======================================================
-// BOTÕES FROTA
-// ======================================================
-
-document.getElementById(
-    "btnNovoVeiculo"
-).addEventListener(
-    "click",
-    abrirNovoVeiculo
-);
-
-
-document.getElementById(
-    "btnDashboardNovo"
-).addEventListener(
-    "click",
-    abrirNovoVeiculo
-);
-
-
-document.getElementById(
-    "btnCancelar"
-).addEventListener(
-    "click",
-    fecharModal
-);
-
-
-document.getElementById(
-    "btnFecharModal"
-).addEventListener(
-    "click",
-    fecharModal
-);
-
-
-document.getElementById(
-    "modalVeiculo"
-).addEventListener(
-    "click",
-    function (event) {
-
-        if (
-            event.target === this
-        ) {
-
-            fecharModal();
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// FILTROS FROTA
-// ======================================================
-
-document.getElementById(
-    "buscaFrota"
-).addEventListener(
-    "input",
-    atualizarTabelaFrota
-);
-
-
-document.getElementById(
-    "filtroArea"
-).addEventListener(
-    "change",
-    atualizarTabelaFrota
-);
-
-
-document.getElementById(
-    "filtroOperacao"
-).addEventListener(
-    "change",
-    atualizarTabelaFrota
-);
-
-
-document.getElementById(
-    "filtroStatus"
-).addEventListener(
-    "change",
-    atualizarTabelaFrota
-);
-
-
-// ======================================================
+// ============================================================
 // MOTORISTAS
-// ======================================================
+// ============================================================
 
 function carregarMotoristas() {
 
     try {
 
-        motoristas =
-            JSON.parse(
-                localStorage.getItem(
-                    CHAVE_MOTORISTAS
-                )
-            ) || [];
+        motoristas = JSON.parse(
+            localStorage.getItem(
+                CHAVE_MOTORISTAS
+            ) || "[]"
+        );
 
-    }
-    catch {
+    } catch (erro) {
+
+        console.error(
+            "Erro ao carregar motoristas:",
+            erro
+        );
 
         motoristas = [];
 
@@ -1783,392 +1435,79 @@ function carregarMotoristas() {
 
     atualizarMotoristas();
 
+    preencherFiltrosMotoristas();
+
+    renderizarFrota();
+
 }
 
 
-// ======================================================
-// SALVAR MOTORISTAS
-// ======================================================
-
-function salvarMotoristas() {
+function salvarListaMotoristas() {
 
     localStorage.setItem(
-
         CHAVE_MOTORISTAS,
-
-        JSON.stringify(
-            motoristas
-        )
-
+        JSON.stringify(motoristas)
     );
 
 }
 
 
-// ======================================================
-// ATUALIZAÇÃO MOTORISTAS
-// ======================================================
+// ============================================================
+// ATUALIZAR MOTORISTAS
+// ============================================================
 
 function atualizarMotoristas() {
-
-    atualizarIndicadoresMotoristas();
-
-    atualizarFiltrosMotoristas();
-
-    atualizarTabelaMotoristas();
-
-}
-
-
-// ======================================================
-// INDICADORES MOTORISTAS
-// ======================================================
-
-function atualizarIndicadoresMotoristas() {
 
     const total =
         motoristas.length;
 
-
     const ativos =
         motoristas.filter(
-            motorista =>
-                motorista.status ===
-                "Ativo"
+            m => m.status === "Ativo"
         ).length;
-
 
     const fixos =
         motoristas.filter(
-            motorista =>
-                motorista.tipo ===
-                "Fixo"
+            m => m.tipo === "Fixo"
         ).length;
-
 
     const reservas =
         motoristas.filter(
-            motorista =>
-                motorista.tipo ===
-                "Reserva"
+            m => m.tipo === "Reserva"
         ).length;
 
 
-    document.getElementById(
-        "motoristasTotal"
-    ).textContent =
-        total;
+    setTexto(
+        "motoristasTotal",
+        total
+    );
 
+    setTexto(
+        "motoristasAtivos",
+        ativos
+    );
 
-    document.getElementById(
-        "motoristasAtivos"
-    ).textContent =
-        ativos;
+    setTexto(
+        "motoristasFixos",
+        fixos
+    );
 
-
-    document.getElementById(
-        "motoristasFixos"
-    ).textContent =
-        fixos;
-
-
-    document.getElementById(
-        "motoristasReservas"
-    ).textContent =
-        reservas;
-
-}
-
-
-// ======================================================
-// FILTROS MOTORISTAS
-// ======================================================
-
-function atualizarFiltrosMotoristas() {
-
-    const filtroArea =
-        document.getElementById(
-            "filtroMotoristaArea"
-        );
-
-
-    const filtroOperacao =
-        document.getElementById(
-            "filtroMotoristaOperacao"
-        );
-
-
-    const areaAtual =
-        filtroArea.value;
-
-
-    const operacaoAtual =
-        filtroOperacao.value;
-
-
-    const areas = [
-        ...new Set(
-            motoristas
-                .map(
-                    motorista =>
-                        motorista.area
-                )
-                .filter(Boolean)
-        )
-    ];
-
-
-    const operacoes = [
-        ...new Set(
-            motoristas
-                .map(
-                    motorista =>
-                        motorista.operacao
-                )
-                .filter(Boolean)
-        )
-    ];
-
-
-    filtroArea.innerHTML =
-        `
-            <option value="">
-                Todas
-            </option>
-        `;
-
-
-    areas.forEach(
-        area => {
-
-            filtroArea.innerHTML += `
-
-                <option value="${area}">
-                    ${area}
-                </option>
-
-            `;
-
-        }
+    setTexto(
+        "motoristasReservas",
+        reservas
     );
 
 
-    filtroOperacao.innerHTML =
-        `
-            <option value="">
-                Todas
-            </option>
-        `;
-
-
-    operacoes.forEach(
-        operacao => {
-
-            filtroOperacao.innerHTML += `
-
-                <option value="${operacao}">
-                    ${operacao}
-                </option>
-
-            `;
-
-        }
-    );
-
-
-    if (
-        areas.includes(
-            areaAtual
-        )
-    ) {
-
-        filtroArea.value =
-            areaAtual;
-
-    }
-
-
-    if (
-        operacoes.includes(
-            operacaoAtual
-        )
-    ) {
-
-        filtroOperacao.value =
-            operacaoAtual;
-
-    }
+    renderizarMotoristas();
 
 }
 
 
-// ======================================================
-// FILTRAR MOTORISTAS
-// ======================================================
+// ============================================================
+// RENDER MOTORISTAS
+// ============================================================
 
-function obterMotoristasFiltrados() {
-
-    const busca =
-        normalizar(
-            document.getElementById(
-                "buscaMotorista"
-            ).value
-        );
-
-
-    const area =
-        document.getElementById(
-            "filtroMotoristaArea"
-        ).value;
-
-
-    const operacao =
-        document.getElementById(
-            "filtroMotoristaOperacao"
-        ).value;
-
-
-    const tipo =
-        document.getElementById(
-            "filtroMotoristaTipo"
-        ).value;
-
-
-    const status =
-        document.getElementById(
-            "filtroMotoristaStatus"
-        ).value;
-
-
-    const turno =
-        document.getElementById(
-            "filtroMotoristaTurno"
-        ).value;
-
-
-    return motoristas.filter(
-        motorista => {
-
-            const textoBusca = [
-
-                motorista.nome,
-
-                motorista.matricula,
-
-                motorista.cpf
-
-            ]
-                .map(normalizar)
-                .join(" ");
-
-
-            return (
-
-                (
-                    !busca ||
-                    textoBusca.includes(
-                        busca
-                    )
-                )
-
-                &&
-
-                (
-                    !area ||
-                    motorista.area === area
-                )
-
-                &&
-
-                (
-                    !operacao ||
-                    motorista.operacao ===
-                    operacao
-                )
-
-                &&
-
-                (
-                    !tipo ||
-                    motorista.tipo === tipo
-                )
-
-                &&
-
-                (
-                    !status ||
-                    motorista.status === status
-                )
-
-                &&
-
-                (
-                    !turno ||
-                    motorista.turno === turno
-                )
-
-            );
-
-        }
-    );
-
-}
-
-
-// ======================================================
-// STATUS MOTORISTA
-// ======================================================
-
-function obterClasseMotoristaStatus(
-    status
-) {
-
-    if (
-        status === "Ativo"
-    ) {
-
-        return (
-            "motorista-status " +
-            "motorista-ativo"
-        );
-
-    }
-
-
-    if (
-        status === "Inativo"
-    ) {
-
-        return (
-            "motorista-status " +
-            "motorista-inativo"
-        );
-
-    }
-
-
-    if (
-        status === "Afastado"
-    ) {
-
-        return (
-            "motorista-status " +
-            "motorista-afastado"
-        );
-
-    }
-
-
-    return "motorista-status";
-
-}
-
-
-// ======================================================
-// TABELA MOTORISTAS
-// ======================================================
-
-function atualizarTabelaMotoristas() {
+function renderizarMotoristas() {
 
     const tabela =
         document.getElementById(
@@ -2176,148 +1515,233 @@ function atualizarTabelaMotoristas() {
         );
 
 
-    const dados =
-        obterMotoristasFiltrados();
+    if (!tabela) return;
 
 
     tabela.innerHTML = "";
 
 
-    dados.forEach(
-        motorista => {
-
-            const linha =
-                document.createElement(
-                    "tr"
-                );
-
-
-            linha.innerHTML = `
-
-                <td>
-                    <strong>
-                        ${valorSeguro(
-                            motorista.nome
-                        )}
-                    </strong>
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        motorista.matricula
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        motorista.telefone
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        motorista.area
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        motorista.operacao
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        motorista.suboperacao
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        motorista.tipo
-                    )}
-                </td>
-
-                <td>
-                    ${valorSeguro(
-                        motorista.turno
-                    )}
-                </td>
-
-                <td>
-
-                    <span class="${obterClasseMotoristaStatus(
-                        motorista.status
-                    )}">
-
-                        ${valorSeguro(
-                            motorista.status
-                        )}
-
-                    </span>
-
-                </td>
-
-                <td>
-
-                    <div class="table-actions">
-
-                        <button
-                            class="action-button edit"
-                            onclick="abrirEdicaoMotorista('${motorista.id}')"
-                        >
-                            ✏️ Editar
-                        </button>
-
-                    </div>
-
-                </td>
-
-            `;
+    const busca =
+        document.getElementById(
+            "filtroMotoristaBusca"
+        )?.value
+        .trim()
+        .toLowerCase() || "";
 
 
-            tabela.appendChild(
-                linha
+    const area =
+        document.getElementById(
+            "filtroMotoristaArea"
+        )?.value || "";
+
+
+    const operacao =
+        document.getElementById(
+            "filtroMotoristaOperacao"
+        )?.value || "";
+
+
+    const tipo =
+        document.getElementById(
+            "filtroMotoristaTipo"
+        )?.value || "";
+
+
+    const status =
+        document.getElementById(
+            "filtroMotoristaStatus"
+        )?.value || "";
+
+
+    const turno =
+        document.getElementById(
+            "filtroMotoristaTurno"
+        )?.value || "";
+
+
+    const filtrados =
+        motoristas.filter(motorista => {
+
+            const correspondeBusca =
+                !busca ||
+                motorista.nome
+                    .toLowerCase()
+                    .includes(busca);
+
+
+            const correspondeArea =
+                !area ||
+                motorista.area === area;
+
+
+            const correspondeOperacao =
+                !operacao ||
+                motorista.operacao === operacao;
+
+
+            const correspondeTipo =
+                !tipo ||
+                motorista.tipo === tipo;
+
+
+            const correspondeStatus =
+                !status ||
+                motorista.status === status;
+
+
+            const correspondeTurno =
+                !turno ||
+                motorista.turno === turno;
+
+
+            return (
+                correspondeBusca &&
+                correspondeArea &&
+                correspondeOperacao &&
+                correspondeTipo &&
+                correspondeStatus &&
+                correspondeTurno
             );
 
-        }
-    );
+        });
 
 
-    document.getElementById(
-        "contadorMotoristas"
-    ).textContent =
+    if (!filtrados.length) {
 
-        `${dados.length} motorista${
-            dados.length !== 1
-                ? "s"
-                : ""
-        }`;
+        tabela.innerHTML = `
+            <tr>
+                <td colspan="8" class="empty-row">
+                    Nenhum motorista encontrado.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+
+    filtrados.forEach(motorista => {
+
+        const linha =
+            document.createElement(
+                "tr"
+            );
+
+
+        linha.innerHTML = `
+
+            <td>
+                <strong>
+                    ${escapeHtml(
+                        motorista.nome
+                    )}
+                </strong>
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    motorista.area || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    motorista.operacao || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    motorista.suboperacao || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    motorista.tipo || "-"
+                )}
+            </td>
+
+            <td>
+                ${escapeHtml(
+                    motorista.turno || "-"
+                )}
+            </td>
+
+            <td>
+                ${badgeStatusMotorista(
+                    motorista.status
+                )}
+            </td>
+
+            <td>
+
+                <div class="action-buttons">
+
+                    <button
+                        class="action-button"
+                        onclick="editarMotorista('${escapeAttribute(motorista.id)}')"
+                    >
+                        Editar
+                    </button>
+
+                </div>
+
+            </td>
+
+        `;
+
+
+        tabela.appendChild(linha);
+
+    });
 
 }
 
 
-// ======================================================
+// ============================================================
+// BADGE MOTORISTA
+// ============================================================
+
+function badgeStatusMotorista(status) {
+
+    const classe = {
+
+        "Ativo":
+            "motorista-ativo",
+
+        "Inativo":
+            "motorista-inativo",
+
+        "Afastado":
+            "motorista-afastado"
+
+    }[status] || "";
+
+
+    return `
+        <span class="motorista-status ${classe}">
+            ${escapeHtml(status || "-")}
+        </span>
+    `;
+
+}
+
+
+// ============================================================
 // NOVO MOTORISTA
-// ======================================================
+// ============================================================
 
 function abrirNovoMotorista() {
 
-    document.getElementById(
-        "tituloModalMotorista"
-    ).textContent =
-        "Novo motorista";
+    const form =
+        document.getElementById(
+            "formMotorista"
+        );
 
 
-    document.getElementById(
-        "subtituloModalMotorista"
-    ).textContent =
-        "Cadastre um novo motorista.";
-
-
-    document.getElementById(
-        "formMotorista"
-    ).reset();
+    form.reset();
 
 
     document.getElementById(
@@ -2325,37 +1749,41 @@ function abrirNovoMotorista() {
     ).value = "";
 
 
-    resetarOperacaoMotorista();
+    document.getElementById(
+        "tituloModalMotorista"
+    ).textContent =
+        "Novo motorista";
 
-    resetarSuboperacaoMotorista();
+
+    limparHierarquiaMotorista();
 
 
     document.getElementById(
         "modalMotorista"
-    ).classList.add(
-        "show"
-    );
+    ).classList.add("show");
 
 }
 
 
-// ======================================================
+// ============================================================
 // EDITAR MOTORISTA
-// ======================================================
+// ============================================================
 
-function abrirEdicaoMotorista(
-    id
-) {
+function editarMotorista(id) {
 
     const motorista =
         motoristas.find(
-            m =>
-                String(m.id) ===
+            item =>
+                String(item.id) ===
                 String(id)
         );
 
 
     if (!motorista) {
+
+        alert(
+            "Motorista não encontrado."
+        );
 
         return;
 
@@ -2369,12 +1797,6 @@ function abrirEdicaoMotorista(
 
 
     document.getElementById(
-        "subtituloModalMotorista"
-    ).textContent =
-        "Altere os dados do motorista.";
-
-
-    document.getElementById(
         "motoristaId"
     ).value =
         motorista.id;
@@ -2383,1026 +1805,669 @@ function abrirEdicaoMotorista(
     document.getElementById(
         "motoristaNome"
     ).value =
-        valorSeguro(
-            motorista.nome
-        );
-
-
-    document.getElementById(
-        "motoristaCpf"
-    ).value =
-        valorSeguro(
-            motorista.cpf
-        );
-
-
-    document.getElementById(
-        "motoristaMatricula"
-    ).value =
-        valorSeguro(
-            motorista.matricula
-        );
-
-
-    document.getElementById(
-        "motoristaTelefone"
-    ).value =
-        valorSeguro(
-            motorista.telefone
-        );
+        motorista.nome || "";
 
 
     document.getElementById(
         "motoristaArea"
     ).value =
-        valorSeguro(
-            motorista.area
-        );
+        motorista.area || "";
 
 
-    carregarOperacoesMotorista(
-        motorista.area,
-        motorista.operacao
+    atualizarOperacoesMotorista(
+        motorista.operacao || ""
     );
 
 
-    carregarSuboperacoesMotorista(
-        motorista.area,
-        motorista.operacao,
-        motorista.suboperacao
+    atualizarSuboperacoesMotorista(
+        motorista.suboperacao || ""
     );
 
 
     document.getElementById(
         "motoristaTipo"
     ).value =
-        valorSeguro(
-            motorista.tipo
-        );
+        motorista.tipo || "Fixo";
 
 
     document.getElementById(
         "motoristaTurno"
     ).value =
-        valorSeguro(
-            motorista.turno
-        );
+        motorista.turno || "Dia";
 
 
     document.getElementById(
         "motoristaStatus"
     ).value =
-        valorSeguro(
-            motorista.status
-        );
+        motorista.status || "Ativo";
 
 
     document.getElementById(
         "motoristaObservacao"
     ).value =
-        valorSeguro(
-            motorista.observacao
-        );
+        motorista.observacao || "";
 
 
     document.getElementById(
         "modalMotorista"
-    ).classList.add(
-        "show"
-    );
+    ).classList.add("show");
 
 }
 
 
-// ======================================================
-// FECHAR MOTORISTA
-// ======================================================
+// ============================================================
+// SALVAR MOTORISTA
+// ============================================================
+
+function salvarMotorista(event) {
+
+    event.preventDefault();
+
+
+    const id =
+        document.getElementById(
+            "motoristaId"
+        ).value;
+
+
+    const dados = {
+
+        nome:
+            document.getElementById(
+                "motoristaNome"
+            ).value.trim(),
+
+        area:
+            document.getElementById(
+                "motoristaArea"
+            ).value,
+
+        operacao:
+            document.getElementById(
+                "motoristaOperacao"
+            ).value,
+
+        suboperacao:
+            document.getElementById(
+                "motoristaSuboperacao"
+            ).value,
+
+        tipo:
+            document.getElementById(
+                "motoristaTipo"
+            ).value,
+
+        turno:
+            document.getElementById(
+                "motoristaTurno"
+            ).value,
+
+        status:
+            document.getElementById(
+                "motoristaStatus"
+            ).value,
+
+        observacao:
+            document.getElementById(
+                "motoristaObservacao"
+            ).value.trim()
+
+    };
+
+
+    if (!dados.nome) {
+
+        alert(
+            "Informe o nome do motorista."
+        );
+
+        return;
+
+    }
+
+
+    if (!dados.area) {
+
+        alert(
+            "Selecione a área."
+        );
+
+        return;
+
+    }
+
+
+    if (!dados.operacao) {
+
+        alert(
+            "Selecione a operação."
+        );
+
+        return;
+
+    }
+
+
+    if (!dados.suboperacao) {
+
+        alert(
+            "Selecione a suboperação."
+        );
+
+        return;
+
+    }
+
+
+    if (id) {
+
+        const indice =
+            motoristas.findIndex(
+                motorista =>
+                    String(motorista.id) ===
+                    String(id)
+            );
+
+
+        if (indice !== -1) {
+
+            motoristas[indice] = {
+
+                ...motoristas[indice],
+
+                ...dados
+
+            };
+
+        }
+
+    } else {
+
+        motoristas.push({
+
+            id:
+                `mot-${Date.now()}`,
+
+            ...dados
+
+        });
+
+    }
+
+
+    salvarListaMotoristas();
+
+    atualizarMotoristas();
+
+    preencherFiltrosMotoristas();
+
+    fecharModalMotorista();
+
+    renderizarFrota();
+
+}
+
+
+// ============================================================
+// FECHAR MODAL MOTORISTA
+// ============================================================
 
 function fecharModalMotorista() {
 
     document.getElementById(
         "modalMotorista"
-    ).classList.remove(
-        "show"
-    );
+    ).classList.remove("show");
 
 }
 
 
-// ======================================================
-// OPERAÇÃO MOTORISTA
-// ======================================================
+// ============================================================
+// HIERARQUIA MOTORISTA
+// ============================================================
 
-function carregarOperacoesMotorista(
-    area,
+function configurarHierarquiaMotorista() {
+
+    const area =
+        document.getElementById(
+            "motoristaArea"
+        );
+
+
+    if (!area) return;
+
+
+    area.addEventListener(
+        "change",
+        () => {
+
+            atualizarOperacoesMotorista();
+
+            atualizarSuboperacoesMotorista();
+
+        }
+    );
+
+
+    const operacao =
+        document.getElementById(
+            "motoristaOperacao"
+        );
+
+
+    if (operacao) {
+
+        operacao.addEventListener(
+            "change",
+            () => {
+
+                atualizarSuboperacoesMotorista();
+
+            }
+        );
+
+    }
+
+}
+
+
+function atualizarOperacoesMotorista(
     operacaoSelecionada = ""
 ) {
 
-    const campo =
+    const area =
+        document.getElementById(
+            "motoristaArea"
+        );
+
+    const operacao =
         document.getElementById(
             "motoristaOperacao"
         );
 
 
-    campo.innerHTML =
-        `
-            <option value="">
-                Selecione
-            </option>
-        `;
+    if (!area || !operacao) return;
 
 
-    campo.disabled =
-        true;
+    operacao.innerHTML = `
+        <option value="">
+            Selecione
+        </option>
+    `;
 
 
-    if (
-        !area ||
-        !HIERARQUIA[area]
-    ) {
-
-        return;
-
-    }
-
-
-    const operacoes =
-        Object.keys(
-            HIERARQUIA[area]
-        );
-
-
-    operacoes.forEach(
-        operacao => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                operacao;
-
-
-            option.textContent =
-                operacao;
-
-
-            campo.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-    campo.disabled =
-        false;
-
-
-    if (
-        operacaoSelecionada
-    ) {
-
-        campo.value =
-            operacaoSelecionada;
-
-    }
-
-}
-
-
-// ======================================================
-// SUBOPERAÇÃO MOTORISTA
-// ======================================================
-
-function carregarSuboperacoesMotorista(
-    area,
-    operacao,
-    suboperacaoSelecionada = ""
-) {
-
-    const campo =
-        document.getElementById(
-            "motoristaSuboperacao"
-        );
-
-
-    campo.innerHTML =
-        `
-            <option value="">
-                Selecione
-            </option>
-        `;
-
-
-    campo.disabled =
-        true;
-
-
-    if (
-
-        !area ||
-        !operacao ||
-        !HIERARQUIA[area] ||
-        !HIERARQUIA[area][operacao]
-
-    ) {
-
-        return;
-
-    }
-
-
-    const suboperacoes =
+    const dados =
         HIERARQUIA[
-            area
-        ][
-            operacao
+            area.value
         ];
 
 
-    suboperacoes.forEach(
-        suboperacao => {
+    if (!dados) {
 
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                suboperacao;
-
-
-            option.textContent =
-                suboperacao;
-
-
-            campo.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-    campo.disabled =
-        false;
-
-
-    if (
-        suboperacaoSelecionada
-    ) {
-
-        campo.value =
-            suboperacaoSelecionada;
-
-    }
-
-}
-
-
-// ======================================================
-// RESETAR MOTORISTA
-// ======================================================
-
-function resetarOperacaoMotorista() {
-
-    const campo =
-        document.getElementById(
-            "motoristaOperacao"
-        );
-
-
-    campo.innerHTML =
-        `
-            <option value="">
-                Selecione a área primeiro
-            </option>
-        `;
-
-
-    campo.value =
-        "";
-
-
-    campo.disabled =
-        true;
-
-}
-
-
-function resetarSuboperacaoMotorista() {
-
-    const campo =
-        document.getElementById(
-            "motoristaSuboperacao"
-        );
-
-
-    campo.innerHTML =
-        `
-            <option value="">
-                Selecione a operação primeiro
-            </option>
-        `;
-
-
-    campo.value =
-        "";
-
-
-    campo.disabled =
-        true;
-
-}
-
-
-// ======================================================
-// ÁREA MOTORISTA
-// ======================================================
-
-document.getElementById(
-    "motoristaArea"
-).addEventListener(
-    "change",
-    function () {
-
-        const area =
-            this.value;
-
-
-        resetarSuboperacaoMotorista();
-
-
-        carregarOperacoesMotorista(
-            area
-        );
-
-
-        if (
-            area === "JET"
-        ) {
-
-            carregarOperacoesMotorista(
-                "JET",
-                "JET"
-            );
-
-
-            carregarSuboperacoesMotorista(
-                "JET",
-                "JET",
-                "JET"
-            );
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// OPERAÇÃO MOTORISTA
-// ======================================================
-
-document.getElementById(
-    "motoristaOperacao"
-).addEventListener(
-    "change",
-    function () {
-
-        const area =
-            document.getElementById(
-                "motoristaArea"
-            ).value;
-
-
-        const operacao =
-            this.value;
-
-
-        carregarSuboperacoesMotorista(
-            area,
-            operacao
-        );
-
-
-        if (
-
-            area === "JET" &&
-            operacao === "JET"
-
-        ) {
-
-            document.getElementById(
-                "motoristaSuboperacao"
-            ).value =
-                "JET";
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// FORMULÁRIO MOTORISTA
-// ======================================================
-
-document.getElementById(
-    "formMotorista"
-).addEventListener(
-    "submit",
-    function (event) {
-
-        event.preventDefault();
-
-
-        const id =
-            document.getElementById(
-                "motoristaId"
-            ).value;
-
-
-        const nome =
-            document.getElementById(
-                "motoristaNome"
-            ).value.trim();
-
-
-        const cpf =
-            document.getElementById(
-                "motoristaCpf"
-            ).value.trim();
-
-
-        const matricula =
-            document.getElementById(
-                "motoristaMatricula"
-            ).value.trim();
-
-
-        const telefone =
-            document.getElementById(
-                "motoristaTelefone"
-            ).value.trim();
-
-
-        const area =
-            document.getElementById(
-                "motoristaArea"
-            ).value;
-
-
-        const operacao =
-            document.getElementById(
-                "motoristaOperacao"
-            ).value;
-
-
-        const suboperacao =
-            document.getElementById(
-                "motoristaSuboperacao"
-            ).value;
-
-
-        const tipo =
-            document.getElementById(
-                "motoristaTipo"
-            ).value;
-
-
-        const turno =
-            document.getElementById(
-                "motoristaTurno"
-            ).value;
-
-
-        const status =
-            document.getElementById(
-                "motoristaStatus"
-            ).value;
-
-
-        const observacao =
-            document.getElementById(
-                "motoristaObservacao"
-            ).value.trim();
-
-
-        if (!nome) {
-
-            alert(
-                "Informe o nome do motorista."
-            );
-
-            return;
-
-        }
-
-
-        if (!matricula) {
-
-            alert(
-                "Informe a matrícula."
-            );
-
-            return;
-
-        }
-
-
-        if (!area) {
-
-            alert(
-                "Selecione a área."
-            );
-
-            return;
-
-        }
-
-
-        if (!operacao) {
-
-            alert(
-                "Selecione a operação."
-            );
-
-            return;
-
-        }
-
-
-        if (!suboperacao) {
-
-            alert(
-                "Selecione a suboperação."
-            );
-
-            return;
-
-        }
-
-
-        if (!turno) {
-
-            alert(
-                "Selecione o turno/crontipo."
-            );
-
-            return;
-
-        }
-
-
-        // ----------------------------------------------
-        // MATRÍCULA DUPLICADA
-        // ----------------------------------------------
-
-        const matriculaNormalizada =
-            normalizar(
-                matricula
-            );
-
-
-        const duplicado =
-            motoristas.some(
-                motorista => {
-
-                    if (
-
-                        id &&
-                        String(
-                            motorista.id
-                        ) === String(id)
-
-                    ) {
-
-                        return false;
-
-                    }
-
-
-                    return (
-
-                        normalizar(
-                            motorista.matricula
-                        ) ===
-                        matriculaNormalizada
-
-                    );
-
-                }
-            );
-
-
-        if (duplicado) {
-
-            alert(
-                "Já existe um motorista cadastrado com esta matrícula."
-            );
-
-            return;
-
-        }
-
-
-        const dados = {
-
-            nome,
-
-            cpf,
-
-            matricula,
-
-            telefone,
-
-            area,
-
-            operacao,
-
-            suboperacao,
-
-            tipo,
-
-            turno,
-
-            status,
-
-            observacao
-
-        };
-
-
-        // ----------------------------------------------
-        // NOVO
-        // ----------------------------------------------
-
-        if (!id) {
-
-            motoristas.push({
-
-                id:
-                    gerarId(),
-
-                ...dados
-
-            });
-
-        }
-        else {
-
-            const index =
-                motoristas.findIndex(
-                    motorista =>
-                        String(
-                            motorista.id
-                        ) === String(id)
-                );
-
-
-            if (
-                index !== -1
-            ) {
-
-                motoristas[index] = {
-
-                    ...motoristas[index],
-
-                    ...dados
-
-                };
-
-            }
-
-        }
-
-
-        salvarMotoristas();
-
-        atualizarMotoristas();
-
-        fecharModalMotorista();
-
-    }
-);
-
-
-// ======================================================
-// BOTÕES MOTORISTA
-// ======================================================
-
-document.getElementById(
-    "btnNovoMotorista"
-).addEventListener(
-    "click",
-    abrirNovoMotorista
-);
-
-
-document.getElementById(
-    "btnCancelarMotorista"
-).addEventListener(
-    "click",
-    fecharModalMotorista
-);
-
-
-document.getElementById(
-    "btnFecharModalMotorista"
-).addEventListener(
-    "click",
-    fecharModalMotorista
-);
-
-
-document.getElementById(
-    "modalMotorista"
-).addEventListener(
-    "click",
-    function (event) {
-
-        if (
-            event.target === this
-        ) {
-
-            fecharModalMotorista();
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// FILTROS MOTORISTAS
-// ======================================================
-
-document.getElementById(
-    "buscaMotorista"
-).addEventListener(
-    "input",
-    atualizarTabelaMotoristas
-);
-
-
-document.getElementById(
-    "filtroMotoristaArea"
-).addEventListener(
-    "change",
-    atualizarTabelaMotoristas
-);
-
-
-document.getElementById(
-    "filtroMotoristaOperacao"
-).addEventListener(
-    "change",
-    atualizarTabelaMotoristas
-);
-
-
-document.getElementById(
-    "filtroMotoristaTipo"
-).addEventListener(
-    "change",
-    atualizarTabelaMotoristas
-);
-
-
-document.getElementById(
-    "filtroMotoristaStatus"
-).addEventListener(
-    "change",
-    atualizarTabelaMotoristas
-);
-
-
-document.getElementById(
-    "filtroMotoristaTurno"
-).addEventListener(
-    "change",
-    atualizarTabelaMotoristas
-);
-
-
-// ======================================================
-// NAVEGAÇÃO
-// ======================================================
-
-const paginas = {
-
-    dashboard: {
-
-        elemento:
-            "paginaDashboard",
-
-        titulo:
-            "Dashboard",
-
-        subtitulo:
-            "Visão geral da operação da frota"
-
-    },
-
-
-    frota: {
-
-        elemento:
-            "paginaFrota",
-
-        titulo:
-            "Frota",
-
-        subtitulo:
-            "Cadastro e controle dos veículos"
-
-    },
-
-
-    motoristas: {
-
-        elemento:
-            "paginaMotoristas",
-
-        titulo:
-            "Motoristas",
-
-        subtitulo:
-            "Cadastro e controle dos motoristas"
-
-    },
-
-
-    escala: {
-
-        elemento:
-            "paginaEscala",
-
-        titulo:
-            "Escala",
-
-        subtitulo:
-            "Gestão das escalas dos motoristas"
-
-    },
-
-
-    manutencao: {
-
-        elemento:
-            "paginaManutencao",
-
-        titulo:
-            "Manutenção",
-
-        subtitulo:
-            "Controle de manutenção da frota"
-
-    },
-
-
-    ocorrencias: {
-
-        elemento:
-            "paginaOcorrencias",
-
-        titulo:
-            "Ocorrências",
-
-        subtitulo:
-            "Registro e acompanhamento de ocorrências"
-
-    },
-
-
-    configuracoes: {
-
-        elemento:
-            "paginaConfiguracoes",
-
-        titulo:
-            "Configurações",
-
-        subtitulo:
-            "Configurações do sistema"
-
-    }
-
-};
-
-
-function abrirPagina(
-    nome
-) {
-
-    Object.values(
-        paginas
-    ).forEach(
-        pagina => {
-
-            document
-                .getElementById(
-                    pagina.elemento
-                )
-                .classList.add(
-                    "hidden"
-                );
-
-        }
-    );
-
-
-    const pagina =
-        paginas[nome];
-
-
-    if (!pagina) {
+        atualizarSuboperacoesMotorista();
 
         return;
 
     }
 
 
-    document
-        .getElementById(
-            pagina.elemento
-        )
-        .classList.remove(
-            "hidden"
-        );
+    Object.keys(dados)
+        .forEach(nome => {
 
-
-    document.getElementById(
-        "tituloPagina"
-    ).textContent =
-        pagina.titulo;
-
-
-    document.getElementById(
-        "subtituloPagina"
-    ).textContent =
-        pagina.subtitulo;
-
-
-    document
-        .querySelectorAll(
-            ".menu-item"
-        )
-        .forEach(
-            item => {
-
-                item.classList.toggle(
-
-                    "active",
-
-                    item.dataset.page ===
-                    nome
-
+            const option =
+                document.createElement(
+                    "option"
                 );
 
+            option.value =
+                nome;
+
+            option.textContent =
+                nome;
+
+
+            if (
+                nome ===
+                operacaoSelecionada
+            ) {
+
+                option.selected =
+                    true;
+
             }
-        );
+
+
+            operacao.appendChild(
+                option
+            );
+
+        });
+
+
+    atualizarSuboperacoesMotorista();
 
 }
 
 
-document
-    .querySelectorAll(
-        ".menu-item"
-    )
-    .forEach(
-        item => {
+function atualizarSuboperacoesMotorista(
+    suboperacaoSelecionada = ""
+) {
 
-            item.addEventListener(
-                "click",
-                () => {
+    const area =
+        document.getElementById(
+            "motoristaArea"
+        );
 
-                    abrirPagina(
-                        item.dataset.page
-                    );
+    const operacao =
+        document.getElementById(
+            "motoristaOperacao"
+        );
 
-                }
+    const suboperacao =
+        document.getElementById(
+            "motoristaSuboperacao"
+        );
+
+
+    if (
+        !area ||
+        !operacao ||
+        !suboperacao
+    ) return;
+
+
+    suboperacao.innerHTML = `
+        <option value="">
+            Selecione
+        </option>
+    `;
+
+
+    const lista =
+        HIERARQUIA[
+            area.value
+        ]?.[
+            operacao.value
+        ] || [];
+
+
+    lista.forEach(nome => {
+
+        const option =
+            document.createElement(
+                "option"
             );
 
+        option.value =
+            nome;
+
+        option.textContent =
+            nome;
+
+
+        if (
+            nome ===
+            suboperacaoSelecionada
+        ) {
+
+            option.selected =
+                true;
+
         }
+
+
+        suboperacao.appendChild(
+            option
+        );
+
+    });
+
+}
+
+
+function limparHierarquiaMotorista() {
+
+    const operacao =
+        document.getElementById(
+            "motoristaOperacao"
+        );
+
+    const suboperacao =
+        document.getElementById(
+            "motoristaSuboperacao"
+        );
+
+
+    if (operacao) {
+
+        operacao.innerHTML = `
+            <option value="">
+                Selecione
+            </option>
+        `;
+
+    }
+
+
+    if (suboperacao) {
+
+        suboperacao.innerHTML = `
+            <option value="">
+                Selecione
+            </option>
+        `;
+
+    }
+
+}
+
+
+// ============================================================
+// FILTROS MOTORISTAS
+// ============================================================
+
+function configurarFiltrosMotoristas() {
+
+    const ids = [
+
+        "filtroMotoristaBusca",
+
+        "filtroMotoristaArea",
+
+        "filtroMotoristaOperacao",
+
+        "filtroMotoristaTipo",
+
+        "filtroMotoristaStatus",
+
+        "filtroMotoristaTurno"
+
+    ];
+
+
+    ids.forEach(id => {
+
+        const elemento =
+            document.getElementById(id);
+
+
+        if (!elemento) return;
+
+
+        elemento.addEventListener(
+            "input",
+            renderizarMotoristas
+        );
+
+
+        elemento.addEventListener(
+            "change",
+            renderizarMotoristas
+        );
+
+    });
+
+}
+
+
+// ============================================================
+// PREENCHER FILTROS
+// ============================================================
+
+function preencherFiltrosMotoristas() {
+
+    preencherSelectUnico(
+        "filtroMotoristaArea",
+        motoristas.map(
+            motorista =>
+                motorista.area
+        )
     );
 
 
-// ======================================================
-// INICIALIZAÇÃO
-// ======================================================
+    preencherSelectUnico(
+        "filtroMotoristaOperacao",
+        motoristas.map(
+            motorista =>
+                motorista.operacao
+        )
+    );
 
-abrirPagina(
-    "dashboard"
-);
+}
 
 
-carregarFrota();
+function preencherSelectUnico(
+    id,
+    valores
+) {
+
+    const select =
+        document.getElementById(id);
 
 
-carregarMotoristas();
+    if (!select) return;
+
+
+    const valorAtual =
+        select.value;
+
+
+    const primeiraOpcao =
+        select.options[0]
+            ?.textContent ||
+        "Todos";
+
+
+    const valoresUnicos =
+        [...new Set(
+            valores.filter(Boolean)
+        )].sort(
+            (a, b) =>
+                a.localeCompare(
+                    b,
+                    "pt-BR"
+                )
+        );
+
+
+    select.innerHTML = "";
+
+
+    const primeira =
+        document.createElement(
+            "option"
+        );
+
+    primeira.value = "";
+
+    primeira.textContent =
+        primeiraOpcao;
+
+    select.appendChild(
+        primeira
+    );
+
+
+    valoresUnicos.forEach(valor => {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            valor;
+
+        option.textContent =
+            valor;
+
+        select.appendChild(
+            option
+        );
+
+    });
+
+
+    if (
+        valoresUnicos.includes(
+            valorAtual
+        )
+    ) {
+
+        select.value =
+            valorAtual;
+
+    }
+
+}
+
+
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+
+function setTexto(id, valor) {
+
+    const elemento =
+        document.getElementById(id);
+
+
+    if (elemento) {
+
+        elemento.textContent =
+            valor;
+
+    }
+
+}
+
+
+function escapeHtml(valor) {
+
+    return String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+
+function escapeAttribute(valor) {
+
+    return String(valor ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'");
+
+}
+
+
+// ============================================================
+// EXPOR FUNÇÕES PARA OS BOTÕES DA TABELA
+// ============================================================
+
+window.editarVeiculo =
+    editarVeiculo;
+
+window.editarMotorista =
+    editarMotorista;
