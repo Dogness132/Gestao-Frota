@@ -12,31 +12,285 @@
 
 <body>
 
-    <h1>🚛 Gestão de Frota</h1>
+    <aside class="sidebar">
 
-    <div class="dashboard">
-
-        <div class="card">
-            <h2>Frota total</h2>
-            <p id="frotaTotal">8</p>
+        <div class="logo">
+            🚛
+            <span>GESTÃO<br>DE FROTA</span>
         </div>
 
-        <div class="card">
-            <h2>Rodando</h2>
-            <p id="rodando">6</p>
+        <nav>
+
+            <a href="#" class="menu-item active">
+                📊
+                <span>Dashboard</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                🚛
+                <span>Frota</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                👨‍✈️
+                <span>Motoristas</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                📅
+                <span>Escala</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                🔧
+                <span>Manutenção</span>
+            </a>
+
+            <a href="#" class="menu-item">
+                📋
+                <span>Ocorrências</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <a href="#" class="menu-item">
+                ⚙️
+                <span>Configurações</span>
+            </a>
+
         </div>
 
-        <div class="card">
-            <h2>Parados</h2>
-            <p id="parados">1</p>
-        </div>
+    </aside>
 
-        <div class="card">
-            <h2>Reserva</h2>
-            <p id="reserva">1</p>
-        </div>
 
-    </div>
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+                <h1>Dashboard</h1>
+                <p>Visão geral da operação</p>
+            </div>
+
+            <div class="user">
+                <div class="avatar">J</div>
+
+                <div>
+                    <strong>Gestor</strong>
+                    <small>Operações</small>
+                </div>
+            </div>
+
+        </header>
+
+
+        <section class="cards">
+
+            <div class="card">
+                <span class="card-title">Frota Total</span>
+                <strong id="frotaTotal">8</strong>
+                <small>Veículos cadastrados</small>
+            </div>
+
+            <div class="card green">
+                <span class="card-title">Em Operação</span>
+                <strong id="frotaOperando">6</strong>
+                <small>Veículos rodando</small>
+            </div>
+
+            <div class="card red">
+                <span class="card-title">Parados</span>
+                <strong id="frotaParada">1</strong>
+                <small>Fora de operação</small>
+            </div>
+
+            <div class="card yellow">
+                <span class="card-title">Reserva</span>
+                <strong id="frotaReserva">1</strong>
+                <small>Veículos disponíveis</small>
+            </div>
+
+        </section>
+
+
+        <section class="content-grid">
+
+            <div class="panel">
+
+                <div class="panel-header">
+                    <h2>Status da Frota</h2>
+                    <span>Atual</span>
+                </div>
+
+                <div class="status-container">
+
+                    <div class="donut">
+                        <div class="donut-center">
+                            <strong id="percentualOperacao">75%</strong>
+                            <span>Operando</span>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+
+                        <div>
+                            <span class="dot green-dot"></span>
+                            Em operação
+                            <strong>6</strong>
+                        </div>
+
+                        <div>
+                            <span class="dot red-dot"></span>
+                            Parados
+                            <strong>1</strong>
+                        </div>
+
+                        <div>
+                            <span class="dot yellow-dot"></span>
+                            Reserva
+                            <strong>1</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="panel">
+
+                <div class="panel-header">
+                    <h2>Distribuição</h2>
+                    <span>Operação</span>
+                </div>
+
+                <div class="distribution">
+
+                    <div class="distribution-row">
+                        <div>
+                            <strong>Raízen</strong>
+                            <span>Entrega</span>
+                        </div>
+
+                        <strong>5</strong>
+                    </div>
+
+                    <div class="bar">
+                        <div class="bar-fill" style="width: 62.5%;"></div>
+                    </div>
+
+
+                    <div class="distribution-row">
+                        <div>
+                            <strong>Nexta</strong>
+                            <span>Operação</span>
+                        </div>
+
+                        <strong>3</strong>
+                    </div>
+
+                    <div class="bar">
+                        <div class="bar-fill" style="width: 37.5%;"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="panel fleet-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h2>Frota</h2>
+                    <span>Últimos veículos cadastrados</span>
+                </div>
+
+                <button class="primary-button">
+                    + Novo veículo
+                </button>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>CV</th>
+                            <th>SM1</th>
+                            <th>SM2</th>
+                            <th>Área</th>
+                            <th>Operação</th>
+                            <th>Suboperação</th>
+                            <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr>
+                            <td>ABC-1234</td>
+                            <td>XYZ-1111</td>
+                            <td>XYZ-2222</td>
+                            <td>Entrega</td>
+                            <td>Raízen</td>
+                            <td>City</td>
+                            <td>
+                                <span class="status active-status">
+                                    ● Rodando
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>DEF-5678</td>
+                            <td>XYZ-3333</td>
+                            <td>XYZ-4444</td>
+                            <td>Entrega</td>
+                            <td>Raízen</td>
+                            <td>Dedicado</td>
+                            <td>
+                                <span class="status active-status">
+                                    ● Rodando
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>GHI-9012</td>
+                            <td>XYZ-5555</td>
+                            <td>XYZ-6666</td>
+                            <td>Coleta</td>
+                            <td>Nexta</td>
+                            <td>Geral</td>
+                            <td>
+                                <span class="status stopped-status">
+                                    ● Parado
+                                </span>
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
 
     <script src="script.js"></script>
 
