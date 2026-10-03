@@ -88,3 +88,108 @@ function gerarId(prefixo = "local") {
         .substring(2, 8)}`;
 
 }
+/* =========================================================
+   DATAS
+   ========================================================= */
+
+function dataHoje() {
+
+    const agora =
+        new Date();
+
+
+    const ano =
+        agora.getFullYear();
+
+
+    const mes =
+        String(
+            agora.getMonth() + 1
+        ).padStart(2, "0");
+
+
+    const dia =
+        String(
+            agora.getDate()
+        ).padStart(2, "0");
+
+
+    return `${ano}-${mes}-${dia}`;
+
+}
+
+
+/* =========================================================
+   DATA LOCAL
+   ========================================================= */
+
+function dataLocal(
+    valor
+) {
+
+    if (!valor) {
+
+        return new Date(NaN);
+
+    }
+
+
+    const partes =
+        String(valor)
+            .split("-")
+            .map(Number);
+
+
+    if (
+        partes.length !== 3
+    ) {
+
+        return new Date(valor);
+
+    }
+
+
+    return new Date(
+        partes[0],
+        partes[1] - 1,
+        partes[2]
+    );
+
+}
+
+
+/* =========================================================
+   FORMATAR DATA
+   ========================================================= */
+
+function formatarData(
+    valor
+) {
+
+    if (!valor) {
+
+        return "-";
+
+    }
+
+
+    const data =
+        dataLocal(valor);
+
+
+    if (
+        Number.isNaN(
+            data.getTime()
+        )
+    ) {
+
+        return "-";
+
+    }
+
+
+    return data.toLocaleDateString(
+        "pt-BR"
+    );
+
+}
